@@ -3738,6 +3738,7 @@ UpdateClientInfo.place(x=1100, y=410)
 openLicensePhoto = tk.Button(LoggedInWindow, text="Delete Document", padx=10, pady=5, fg="white", bg="#263D42", command=deleteDocument).place(x=1075, y=830)
 #openLicensePhoto = tk.Button(LoggedInWindow, text="Show Document", padx=10, pady=5, fg="white", bg="#263D42", command=openLicenseImage).place(x=1075, y=830)
 
+
 ClockInButton = tk.Button(LoggedInWindow, text="  Clock In ", padx=2, pady=2, fg="white", bg="#263D42", command=ClockIn)
 ClockInButton.place_forget()
 ClockOutButton = tk.Button(LoggedInWindow, text="Clock Out", padx=2, pady=2, fg="white", bg="#263D42", command=ClockOut)
@@ -3801,6 +3802,7 @@ def on_close():
 
 MainWindow.protocol("WM_DELETE_WINDOW",  on_close)
 
+Label(MainWindow, text="Developed By: JTelloTech.com", font=("Arial", 10), background="black", fg="white") .place(x=1320, y=930)
 #
 #mainloop
 MainWindow.mainloop()
