@@ -4,7 +4,8 @@ from PIL import Image, ImageTk
 import tkinter as tk
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-import sqlite3
+from selenium.webdriver.chrome.options import Options
+import mysql.connector as mysql
 import io
 import os
 import time
@@ -13,6 +14,10 @@ import shutil
 from datetime import date, timedelta
 from tkcalendar import *
 import datetime
+import subprocess
+import socket
+
+HWID = ""
 
 #main
 MainWindow = Tk()
@@ -23,8 +28,62 @@ MainWindow.geometry("1500x950")
 MainWindow.resizable(False,False)
 
 topWindowsToCloseOnLogout = []
+def getHWID():
+    global HWID
+    getID = subprocess.check_output('wmic csproduct get UUID').split()
+    stringID = str(getID[1])
+    stringHWID = stringID.split("'")
+    HWID = stringHWID[1]
+    
+getHWID()
 
-#Top Menu
+
+HEADER = 64
+PORT = 9316
+SERVER = "test.bestserverglobal.com"
+ADDR = (SERVER, PORT)
+FORMAT = "utf-8"
+DISCONNECT_MESSAGE = "!Disconnect"
+
+databaseData = []
+try:
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(ADDR)
+    
+    def send(msg):
+        message = msg.encode(FORMAT)
+        msgLength = len(message)
+        sendLength = str(msgLength).encode(FORMAT)
+        sendLength += b' ' * (HEADER - len(sendLength))
+        client.send(sendLength)
+        client.send(message)
+        from_server = client.recv(HEADER).decode(FORMAT)
+        if from_server:
+            databaseData.append(from_server)
+
+    send("getDatabaseHost")
+    send("getDatabaseUser")
+    send("getDatabasePassword")
+    send("getDatabaseClientTable")
+    send("getDatabasePort")
+    send(DISCONNECT_MESSAGE)
+
+except:
+    messagebox.showerror("Error", "Unable to connect to server.")
+    MainWindow.destroy()
+
+try:
+    connect = mysql.connect(
+        host = databaseData[0],
+        user = databaseData[1],
+        passwd = databaseData[2],
+        database = databaseData[3],
+        port = databaseData[4],
+    )
+except:
+    messagebox.showerror("Error", "Unable to connect to database.")
+    MainWindow.destroy()
+
 TopMenuButtons = Frame(MainWindow, bg="#516CC2")
 TopMenuButtons.place_forget()
 
@@ -59,8 +118,7 @@ GetDaysAndHoursWorked.place(relwidth=0.2, relheight=0.25, x=1200, y=40)
 ClockWindow = Frame(LoggedInWindow, bg="black")
 ClockWindow.place_forget()
 
-connect = sqlite3.connect('MsClients.db')
-cursor = connect.cursor()
+cursor = connect.cursor(buffered=True)
 #logo
 Logo = PhotoImage(file="morning-star-logo.png")
 Label(LoggedInWindow, image=Logo, bg="white") .place(x=340, y=50)
@@ -69,6 +127,12 @@ Label(LoggedInWindow, image=Logo, bg="white") .place(x=340, y=50)
 ClockLabel = Label(LoggedInWindow, text="", font=("Helvetica", 15), fg="white", bg="black")
 ClockLabel.place(x=1270,y=0)
 
+def stayConnectedToMySQL():
+    cursor.execute('SELECT id from Employees LIMIT 1')
+    print("foi")
+    ClockLabel.after(300000, stayConnectedToMySQL)
+
+stayConnectedToMySQL()
 #days
 Label(GetDaysAndHoursWorked, text="Monday:", font=("Helvetica", 15), fg="white", bg="black").place(x=0, y=0)
 MondayTimer = Label(GetDaysAndHoursWorked, text="", font=("Helvetica", 15), fg="white", bg="black")
@@ -120,9 +184,9 @@ documentListScrollBar.pack(side=RIGHT, fill=Y)
 
 
 cursor.execute('''CREATE TABLE IF NOT EXISTS Employees(
-                    id integer PRIMARY KEY, Username TEXT, Password TEXT, FirstName TEXT, MiddleName TEXT, LastName TEXT, Access integer,
+                    id integer PRIMARY KEY AUTO_INCREMENT, Username TEXT, Password TEXT, FirstName TEXT, MiddleName TEXT, LastName TEXT, Access integer NOT NULL DEFAULT 0,
                     email TEXT, phone TEXT, address TEXT, apt TEXT, city TEXT, state TEXT, zip TEXT,
-                    SSN TEXT, salary, photo BLOB NOT NULL,
+                    SSN TEXT, salary TEXT, photo BLOB,
                     clockedIn integer NOT NULL DEFAULT 0,
                     mondayDay TEXT,
                     mondayTimer	TEXT,
@@ -138,36 +202,38 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS Employees(
                     thursdayTimeWorked integer NOT NULL DEFAULT 0,
                     fridayDay TEXT,
                     fridayTimer	TEXT,
-                    fridayTimeWorked INTEGER DEFAULT 0,
-                    timeOnClose	TEXT)''')
+                    fridayTimeWorked INTEGER NOT NULL DEFAULT 0,
+                    timeOnClose	TEXT,
+                    HWID TEXT,
+                    HWIDTime integer NOT NULL DEFAULT 0)''')
 
 cursor.execute('''CREATE TABLE IF NOT EXISTS Clients(
-                    id integer PRIMARY KEY, name TEXT, married integer,
+                    id integer PRIMARY KEY AUTO_INCREMENT, name TEXT, married integer NOT NULL DEFAULT 0,
                     email TEXT, phone TEXT, address TEXT, apt TEXT, city TEXT, state TEXT, zip TEXT,
-                    homeOwned integer, sameAsMailing integer,
+                    homeOwned integer NOT NULL DEFAULT 0, sameAsMailing integer NOT NULL DEFAULT 0,
                     mailingAddress TEXT, mailingApt TEXT, mailingCity TEXT, mailingState TEXT, mailingZip TEXT, 
-                    driver1 TEXT, driver1License TEXT, driver1State TEXT, driver1Dob TEXT, driver1Married integer,
-                    driver2 TEXT, driver2License TEXT, driver2State TEXT, driver2Dob TEXT, driver2Married integer, 
-                    driver3 TEXT, driver3License TEXT, driver3State TEXT, driver3Dob TEXT, driver3Married integer,
-                    driver4 TEXT, driver4License TEXT, driver4State TEXT, driver4Dob TEXT, driver4Married integer,
-                    driver5 TEXT, driver5License TEXT, driver5State TEXT, driver5Dob TEXT, driver5Married integer,
-                    priorInsurance integer, priorInsuranceCarrier TEXT, priorInsurancePolicyNumber TEXT, priorInsuranceYearsWithPolicy TEXT, priorInsuranceExpDate TEXT,
-                    BiLimit integer, PdLimit integer, PipDeductible integer, PdForYourVehicle integer, PdDeductibleForYourVehicle integer,
-                    vehicle1 TEXT, vehicle1Make TEXT, vehicle1Model TEXT, vehicle1VIN TEXT, vehicle1Financed integer, vehicle1Leased integer,
-                    vehicle2 TEXT, vehicle2Make TEXT, vehicle2Model TEXT, vehicle2VIN TEXT, vehicle2Financed integer, vehicle2Leased integer,
-                    vehicle3 TEXT, vehicle3Make TEXT, vehicle3Model TEXT, vehicle3VIN TEXT, vehicle3Financed integer, vehicle3Leased integer,
-                    vehicle4 TEXT, vehicle4Make TEXT, vehicle4Model TEXT, vehicle4VIN TEXT, vehicle4Financed integer, vehicle4Leased integer,
-                    vehicle5 TEXT, vehicle5Make TEXT, vehicle5Model TEXT, vehicle5VIN TEXT, vehicle5Financed integer, vehicle5Leased integer,
+                    driver1 TEXT, driver1License TEXT, driver1State TEXT, driver1Dob TEXT, driver1Married integer NOT NULL DEFAULT 0,
+                    driver2 TEXT, driver2License TEXT, driver2State TEXT, driver2Dob TEXT, driver2Married integer NOT NULL DEFAULT 0, 
+                    driver3 TEXT, driver3License TEXT, driver3State TEXT, driver3Dob TEXT, driver3Married integer NOT NULL DEFAULT 0,
+                    driver4 TEXT, driver4License TEXT, driver4State TEXT, driver4Dob TEXT, driver4Married integer NOT NULL DEFAULT 0,
+                    driver5 TEXT, driver5License TEXT, driver5State TEXT, driver5Dob TEXT, driver5Married integer NOT NULL DEFAULT 0,
+                    priorInsurance integer NOT NULL DEFAULT 0, priorInsuranceCarrier TEXT, priorInsurancePolicyNumber TEXT, priorInsuranceYearsWithPolicy TEXT, priorInsuranceExpDate TEXT,
+                    BiLimit integer NOT NULL DEFAULT 0, PdLimit integer NOT NULL DEFAULT 0, PipDeductible integer NOT NULL DEFAULT 0, PdForYourVehicle integer NOT NULL DEFAULT 0, PdDeductibleForYourVehicle integer NOT NULL DEFAULT 0,
+                    vehicle1 TEXT, vehicle1Make TEXT, vehicle1Model TEXT, vehicle1VIN TEXT, vehicle1Financed integer NOT NULL DEFAULT 0, vehicle1Leased integer NOT NULL DEFAULT 0,
+                    vehicle2 TEXT, vehicle2Make TEXT, vehicle2Model TEXT, vehicle2VIN TEXT, vehicle2Financed integer NOT NULL DEFAULT 0, vehicle2Leased integer NOT NULL DEFAULT 0,
+                    vehicle3 TEXT, vehicle3Make TEXT, vehicle3Model TEXT, vehicle3VIN TEXT, vehicle3Financed integer NOT NULL DEFAULT 0, vehicle3Leased integer NOT NULL DEFAULT 0,
+                    vehicle4 TEXT, vehicle4Make TEXT, vehicle4Model TEXT, vehicle4VIN TEXT, vehicle4Financed integer NOT NULL DEFAULT 0, vehicle4Leased integer NOT NULL DEFAULT 0,
+                    vehicle5 TEXT, vehicle5Make TEXT, vehicle5Model TEXT, vehicle5VIN TEXT, vehicle5Financed integer NOT NULL DEFAULT 0, vehicle5Leased integer NOT NULL DEFAULT 0,
                     accident1Date TEXT, accident1Type TEXT, accident1Driver TEXT, accident1PIP TEXT, accident1PointsOnLicense TEXT, 
                     accident2Date TEXT, accident2Type TEXT, accident2Driver TEXT, accident2PIP TEXT, accident2PointsOnLicense TEXT, 
                     accident3Date TEXT, accident3Type TEXT, accident3Driver TEXT, accident3PIP TEXT, accident3PointsOnLicense TEXT, 
-                    licensePhoto BLOB NOT NULL)''')
+                    licensePhoto BLOB)''')
     
 cursor.execute('''CREATE TABLE IF NOT EXISTS EmployeeHours(
-                    id integer PRIMARY KEY,
-                    EmployeeID integer,
+                    id integer PRIMARY KEY AUTO_INCREMENT,
+                    EmployeeID integer NOT NULL DEFAULT 0,
                     Date TEXT,
-                    TimeWorked INTEGER DEFAULT 0,
+                    TimeWorked INTEGER NOT NULL DEFAULT 0,
                     ClockedIn1 TEXT,
                     ClockedOut1 TEXT,
                     ClockedIn2 TEXT,
@@ -179,7 +245,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS EmployeeHours(
                     ClockedIn5 TEXT,
                     ClockedOut5 TEXT,
                     ClockedIn6 TEXT,
-                    ClockedOut6,
+                    ClockedOut6 TEXT,
                     ClockedIn7 TEXT,
                     ClockedOut7	TEXT,
                     ClockedIn8 TEXT,
@@ -190,15 +256,69 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS EmployeeHours(
                     ClockedOut10 TEXT)''')
 
 cursor.execute('''CREATE TABLE IF NOT EXISTS Documents(
-                    id integer PRIMARY KEY,
-                    ClientID integer,
+                    id integer PRIMARY KEY AUTO_INCREMENT,
+                    ClientID integer NOT NULL DEFAULT 0,
                     DocumentName TEXT,
-                    document BLOB NOT NULL,
+                    document BLOB,
                     documentDir TEXT)''')
 
+cursor.execute("""SELECT count(*) as tot FROM Employees""")
+data = cursor.fetchone()
+print(data[0])
+if data[0] == 0:
+    createAdminWindow = Toplevel()
+    createAdminWindow.iconbitmap('favicon-16x16.ico')
+    createAdminWindow.title("Create Admin Account")
+    createAdminWindow.geometry("400x250")
+    createAdminWindow.resizable(False, False)
 
-cursor.execute('SELECT * from Clients')
-clients = cursor.fetchall()
+    createAdmin = Label(createAdminWindow, text="Create Admin User", font=("Arial", 15), fg="black")
+    createAdmin.place(x=120, y=0)
+    Label(createAdminWindow, text="Email:", font=("Arial", 15), fg="black").place(x=10, y=50)
+    AdminEmail = Entry(createAdminWindow, font=("Arial", 15), width=20, bg="white")
+    AdminEmail.place(x=110, y=50)
+    
+    Label(createAdminWindow, text="Username:", font=("Arial", 15), fg="black").place(x=10, y=100)
+    AdminUserName = Entry(createAdminWindow, font=("Arial", 15), width=20, bg="white")
+    AdminUserName.place(x=110, y=100)
+
+    Label(createAdminWindow, text="Password:", font=("Arial", 15), fg="black").place(x=10, y=150)
+    AdminPassword = Entry(createAdminWindow, font=("Arial", 15), width=20, bg="white")
+    AdminPassword.place(x=110, y=150)
+    
+    def createAdminUser():
+        AdmEmail = AdminEmail.get()
+        AdmUser = AdminUserName.get()
+        AdmPassword = AdminPassword.get()
+        access = 999
+        empty = ""
+        if AdmEmail != "" and AdmUser != "" and AdmPassword != "":
+            cursor.execute("""SELECT count(*) as tot FROM Employees""")
+            data = cursor.fetchone()
+            print(data[0])
+            if data[0] == 0:   
+                cursor.execute('''INSERT INTO Employees (Username, Password, FirstName, MiddleName, LastName, Access, email, phone, address, apt, city, state, zip, SSN, salary) 
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', 
+                            [AdmUser, AdmPassword, empty, empty, empty, access, AdmEmail, empty, empty, empty, empty, empty, empty, empty, empty])
+                connect.commit()
+                messagebox.showinfo("Created", "Admin user has been created!")
+                createAdminWindow.destroy()
+            else:
+                Label(createAdminWindow, text="Admin user already created!", font=("Arial", 12), fg="black").place(x=130, y=175)
+        else:
+            Label(createAdminWindow, text="Fields can not be empty!", font=("Arial", 12), fg="black").place(x=130, y=175)
+    CreateAdminUser = tk.Button(createAdminWindow, text="Create", font=("Arial", 15), padx=10, pady=1, fg="white", bg="#263D42", command=createAdminUser)
+    CreateAdminUser.place(x=150, y=200)
+
+    MainWindow.wait_window(createAdminWindow)
+
+cursor.execute('SELECT * from Employees')
+    
+try:
+    cursor.execute('SELECT * from Clients')
+    clients = cursor.fetchall()
+except:
+    pass
 
 imageSize = (100,100)
 licenseImage = Image.open("imageicon.png")
@@ -210,7 +330,6 @@ photoLabel.place(x=40, y=29)
 
 currentTab = Label(text='Login', bg=("black"), fg="white")
 currentTab.place(x=0,y=200)
-
 UserIDfound = Label(text='', bg=("black"), fg="white")
 UserIDfound.place(x=200,y=200)
 
@@ -514,9 +633,9 @@ def uploadDocument():
     if fileExtension == ".pdf":
         shutil.copy(file, "documents/")
     docDir = f"documents/{filename}"
-    cursor.execute('''INSERT INTO Documents (ClientID, DocumentName, document, documentDir) VALUES (?, ?, ?, ?)''', [clientID, getFileName, fileBinary, docDir])
+    cursor.execute('''INSERT INTO Documents (ClientID, DocumentName, document, documentDir) VALUES (%s, %s, %s, %s)''', [clientID, getFileName, fileBinary, docDir])
     connect.commit()
-    cursor.execute('SELECT DocumentName from Documents WHERE clientID=?', [clientID])
+    cursor.execute('SELECT DocumentName from Documents WHERE clientID=%s', [clientID])
     documentsFetched = [ x[0] for x in cursor.fetchall()]
     documentsData = []
     for document in documentsFetched:
@@ -527,13 +646,13 @@ def uploadDocument():
 def deleteDocument():
     clientID = clientIDfound.cget("text")
     loadedDocument = documentList.get(documentList.curselection())
-    cursor.execute('SELECT documentDir from Documents WHERE DocumentName=? AND clientID=?', [loadedDocument, clientID])
+    cursor.execute('SELECT documentDir from Documents WHERE DocumentName=%s AND clientID=%s', [loadedDocument, clientID])
     documentFetched = [ x[0] for x in cursor.fetchall()]
     fileDir = documentFetched[0]
     os.remove(fileDir)
-    cursor.execute('DELETE from Documents WHERE DocumentName=? AND clientID=?', [loadedDocument, clientID])
+    cursor.execute('DELETE from Documents WHERE DocumentName=%s AND clientID=%s', [loadedDocument, clientID])
     connect.commit()
-    cursor.execute('SELECT DocumentName from Documents WHERE clientID=?', [clientID])
+    cursor.execute('SELECT DocumentName from Documents WHERE clientID=%s', [clientID])
     documentsFetched = [ x[0] for x in cursor.fetchall()]
     documentsData = []
     for document in documentsFetched:
@@ -547,7 +666,7 @@ def openLicenseImage():
 def openDocument(self):
     clientID = clientIDfound.cget("text")
     loadedDocument = documentList.get(documentList.curselection())
-    cursor.execute('SELECT document from Documents WHERE DocumentName=? AND clientID=?', [loadedDocument, clientID])
+    cursor.execute('SELECT document from Documents WHERE DocumentName=%s AND clientID=%s', [loadedDocument, clientID])
     documentFetched = [ x[0] for x in cursor.fetchall()]
     #
     #    os.startfile(file)
@@ -557,7 +676,7 @@ def openDocument(self):
         document.show()
     except:
         try:
-            cursor.execute('SELECT documentDir from Documents WHERE DocumentName=? AND clientID=?', [loadedDocument, clientID])
+            cursor.execute('SELECT documentDir from Documents WHERE DocumentName=%s AND clientID=%s', [loadedDocument, clientID])
             documentFetched = [ x[0] for x in cursor.fetchall()]
             fileDir = documentFetched[0]
             currentDir = os.path.abspath(os.getcwd())
@@ -568,8 +687,13 @@ def openDocument(self):
 def quote():
     #os.system('python seleniumProj.py')
     # get chromedriver
+    chrome_Options = Options()
+    chrome_Options.add_argument("--headless")
     PATH = r"chromedriver.exe"
-    driver = webdriver.Chrome(PATH)
+    CHROME_PATH = r"C:/Program Files/Google/Chrome/Application/chrome.exe"
+    chrome_Options.binary_location = CHROME_PATH
+
+    driver = webdriver.Chrome(executable_path=PATH, options=chrome_Options)
     # USER DATA
     accountName = NameInsured.get()
     accountPassword = emailEntry.get()
@@ -599,7 +723,8 @@ def quote():
         insertAccountPassword.send_keys(accountPassword)
         insertAccountPassword.send_keys(Keys.RETURN)
     print("input credentials")
-    #driver.close()
+    driver.get_screenshot_as_file("capture.png")
+    driver.close()
 
 def Load(self):
     #connect = sqlite3.connect('MsClients.db')
@@ -931,7 +1056,7 @@ def Load(self):
                 licenseImage = getClientLicensePhoto
                 #print("nao carregou")
             try:
-                cursor.execute('SELECT DocumentName from Documents WHERE clientID=?', [client[0]])
+                cursor.execute('SELECT DocumentName from Documents WHERE clientID=%s', [client[0]])
                 documentsFetched = [ x[0] for x in cursor.fetchall()]
                 documentsData = []
                 for document in documentsFetched:
@@ -1169,17 +1294,17 @@ def Save():
                         accident1Date, accident1Type, accident1Driver, accident1PIP, accident1PointsOnLicense, 
                         accident2Date, accident2Type, accident2Driver, accident2PIP, accident2PointsOnLicense, 
                         accident3Date, accident3Type, accident3Driver, accident3PIP, accident3PointsOnLicense, 
-                        licensePhoto) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                                ?, ?, ?, ?, ?, ?, ?)''', 
+                        licensePhoto NOT NULL DEFAULT 0) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                %s, %s, %s, %s, %s, %s, %s)''', 
                         [clientName, ClientMarried, ClientEmail, ClientPhone,
                             ClientAddress, ClientAddressApt, ClientAddressCity, ClientAddressState, ClientAddressZipCode, ClientHomeOwned,
                             ClientSameAsMailing, ClientMailingAddress, ClientMailingAddressApt, ClientMailingAddressCity, ClientMailingAddressState, ClientMailingAddressZipCode,
@@ -1348,24 +1473,24 @@ def UpdateClient():
     except:
         LicensePhoto = convertToBinary('imageicon.png')
 
-    cursor.execute('''UPDATE Clients SET name=?, married=?, email=?, phone=?, address=?, apt=?, city=?, state=?, zip=?, homeOwned=?, sameAsMailing=?,
-                        mailingAddress=?, mailingApt=?, mailingCity=?, mailingState=?, mailingZip=?, 
-                        driver1=?, driver1License=?, driver1State=?, driver1Dob=?, driver1Married=?,
-                        driver2=?, driver2License=?, driver2State=?, driver2Dob=?, driver2Married=?, 
-                        driver3=?, driver3License=?, driver3State=?, driver3Dob=?, driver3Married=?,
-                        driver4=?, driver4License=?, driver4State=?, driver4Dob=?, driver4Married=?,
-                        driver5=?, driver5License=?, driver5State=?, driver5Dob=?, driver5Married=?,
-                        priorInsurance=?, priorInsuranceCarrier=?, priorInsurancePolicyNumber=?, priorInsuranceYearsWithPolicy=?, priorInsuranceExpDate=?,
-                        BiLimit=?, PdLimit=?, PipDeductible=?, PdForYourVehicle=?, PdDeductibleForYourVehicle=?,
-                        vehicle1=?, vehicle1Make=?, vehicle1Model=?, vehicle1VIN=?, vehicle1Financed=?, vehicle1Leased=?,
-                        vehicle2=?, vehicle2Make=?, vehicle2Model=?, vehicle2VIN=?, vehicle2Financed=?, vehicle2Leased=?,
-                        vehicle3=?, vehicle3Make=?, vehicle3Model=?, vehicle3VIN=?, vehicle3Financed=?, vehicle3Leased=?,
-                        vehicle4=?, vehicle4Make=?, vehicle4Model=?, vehicle4VIN=?, vehicle4Financed=?, vehicle4Leased=?,
-                        vehicle5=?, vehicle5Make=?, vehicle5Model=?, vehicle5VIN=?, vehicle5Financed=?, vehicle5Leased=?,
-                        accident1Date=?, accident1Type=?, accident1Driver=?, accident1PIP=?, accident1PointsOnLicense=?, 
-                        accident2Date=?, accident2Type=?, accident2Driver=?, accident2PIP=?, accident2PointsOnLicense=?, 
-                        accident3Date=?, accident3Type=?, accident3Driver=?, accident3PIP=?, accident3PointsOnLicense=?,
-                        licensePhoto=? WHERE id=?''', 
+    cursor.execute('''UPDATE Clients SET name=%s, married=%s, email=%s, phone=%s, address=%s, apt=%s, city=%s, state=%s, zip=%s, homeOwned=%s, sameAsMailing=%s,
+                        mailingAddress=%s, mailingApt=%s, mailingCity=%s, mailingState=%s, mailingZip=%s, 
+                        driver1=%s, driver1License=%s, driver1State=%s, driver1Dob=%s, driver1Married=%s,
+                        driver2=%s, driver2License=%s, driver2State=%s, driver2Dob=%s, driver2Married=%s, 
+                        driver3=%s, driver3License=%s, driver3State=%s, driver3Dob=%s, driver3Married=%s,
+                        driver4=%s, driver4License=%s, driver4State=%s, driver4Dob=%s, driver4Married=%s,
+                        driver5=%s, driver5License=%s, driver5State=%s, driver5Dob=%s, driver5Married=%s,
+                        priorInsurance=%s, priorInsuranceCarrier=%s, priorInsurancePolicyNumber=%s, priorInsuranceYearsWithPolicy=%s, priorInsuranceExpDate=%s,
+                        BiLimit=%s, PdLimit=%s, PipDeductible=%s, PdForYourVehicle=%s, PdDeductibleForYourVehicle=%s,
+                        vehicle1=%s, vehicle1Make=%s, vehicle1Model=%s, vehicle1VIN=%s, vehicle1Financed=%s, vehicle1Leased=%s,
+                        vehicle2=%s, vehicle2Make=%s, vehicle2Model=%s, vehicle2VIN=%s, vehicle2Financed=%s, vehicle2Leased=%s,
+                        vehicle3=%s, vehicle3Make=%s, vehicle3Model=%s, vehicle3VIN=%s, vehicle3Financed=%s, vehicle3Leased=%s,
+                        vehicle4=%s, vehicle4Make=%s, vehicle4Model=%s, vehicle4VIN=%s, vehicle4Financed=%s, vehicle4Leased=%s,
+                        vehicle5=%s, vehicle5Make=%s, vehicle5Model=%s, vehicle5VIN=%s, vehicle5Financed=%s, vehicle5Leased=%s,
+                        accident1Date=%s, accident1Type=%s, accident1Driver=%s, accident1PIP=%s, accident1PointsOnLicense=%s, 
+                        accident2Date=%s, accident2Type=%s, accident2Driver=%s, accident2PIP=%s, accident2PointsOnLicense=%s, 
+                        accident3Date=%s, accident3Type=%s, accident3Driver=%s, accident3PIP=%s, accident3PointsOnLicense=%s,
+                        licensePhoto=%s WHERE id=%s''', 
                             (clientName, ClientMarried, ClientEmail, ClientPhone,
                             ClientAddress, ClientAddressApt, ClientAddressCity, ClientAddressState, ClientAddressZipCode, ClientHomeOwned,
                             ClientSameAsMailing, ClientMailingAddress, ClientMailingAddressApt, ClientMailingAddressCity, ClientMailingAddressState, ClientMailingAddressZipCode,
@@ -1416,10 +1541,10 @@ def Timer():
     today = date.today()
     
     if day == "Monday":
-        cursor.execute('SELECT mondayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT mondayDay from Employees WHERE id=%s',[userId])
         fetchedUserMondayDay = [ x[0] for x in cursor.fetchall()]
         MondayDay = fetchedUserMondayDay[0]
-        cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=%s',[userId])
         fetchedUserMondayTimeWorked = [ x[0] for x in cursor.fetchall()]
         MondayTimeWorkedDb = fetchedUserMondayTimeWorked[0]
         workedTimeInSeconds = MondayTimeWorkedDb + timeDifferenceWhenLoggedIn
@@ -1431,18 +1556,18 @@ def Timer():
             MondayTimer.config(text=newTime)
             dbTime = MondayTimer.cget("text")
             timeXOut = int(time.time())
-            cursor.execute('UPDATE Employees SET mondayTimer=? WHERE id=?',(dbTime, userId))
-            cursor.execute('UPDATE Employees SET timeOnClose=? WHERE id=?',(timeXOut, userId))
-            cursor.execute('UPDATE Employees SET mondayTimeWorked=? WHERE id=?',(workedTimeInSeconds, userId))
-            cursor.execute('UPDATE EmployeeHours SET TimeWorked=? WHERE EmployeeID=? AND Date=?',(workedTimeInSeconds, userId, currentDate))
+            cursor.execute('UPDATE Employees SET mondayTimer=%s WHERE id=%s',(dbTime, userId))
+            cursor.execute('UPDATE Employees SET timeOnClose=%s WHERE id=%s',(timeXOut, userId))
+            cursor.execute('UPDATE Employees SET mondayTimeWorked=%s WHERE id=%s',(workedTimeInSeconds, userId))
+            cursor.execute('UPDATE EmployeeHours SET TimeWorked=%s WHERE EmployeeID=%s AND Date=%s',(workedTimeInSeconds, userId, currentDate))
         else:
-            cursor.execute('UPDATE Employees SET mondayDay=? WHERE id=?',(currentDate, userId))
-            cursor.execute('UPDATE Employees SET mondayTimer=? WHERE id=?',("0:00:00", userId))
-            cursor.execute('UPDATE Employees SET mondayTimeWorked=? WHERE id=?',(0, userId))
-            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=? WHERE id=?',(0, userId))
-            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=? WHERE id=?',(0, userId))
-            cursor.execute('UPDATE Employees SET thursdayTimeWorked=? WHERE id=?',(0, userId))
-            cursor.execute('UPDATE Employees SET fridayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET mondayDay=%s WHERE id=%s',(currentDate, userId))
+            cursor.execute('UPDATE Employees SET mondayTimer=%s WHERE id=%s',("0:00:00", userId))
+            cursor.execute('UPDATE Employees SET mondayTimeWorked=%s WHERE id=%s',(0, userId))
+            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=%s WHERE id=%s',(0, userId))
+            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=%s WHERE id=%s',(0, userId))
+            cursor.execute('UPDATE Employees SET thursdayTimeWorked=%s WHERE id=%s',(0, userId))
+            cursor.execute('UPDATE Employees SET fridayTimeWorked=%s WHERE id=%s',(0, userId))
             MondayTimer.config(text=newTime)
         TuesdayTimer.config(text="0:00:00")
         WednesdayTimer.config(text="0:00:00")
@@ -1450,22 +1575,22 @@ def Timer():
         FridayTimer.config(text="0:00:00")
     elif day == "Tuesday":
         getMondayDate = today - timedelta(days = 1)
-        cursor.execute('SELECT mondayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT mondayDay from Employees WHERE id=%s',[userId])
         fetchedUserMondayDay = [ x[0] for x in cursor.fetchall()]
         MondayDate = fetchedUserMondayDay[0]
         if str(getMondayDate) == MondayDate:
-            cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=?',[userId])
+            cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=%s',[userId])
             fetchedUserMondayTimeWorked = [ x[0] for x in cursor.fetchall()]
             MondayTimeWorkedDb = timedelta(seconds=fetchedUserMondayTimeWorked[0])
             MondayTimer.config(text=MondayTimeWorkedDb)
         else:
             MondayTimer.config(text="0:00:00")
-            cursor.execute('UPDATE Employees SET mondayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET mondayTimeWorked=%s WHERE id=%s',(0, userId))
         #
-        cursor.execute('SELECT tuesdayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT tuesdayDay from Employees WHERE id=%s',[userId])
         fetchedUserTuesdayDay = [ x[0] for x in cursor.fetchall()]
         TuesdayDay = fetchedUserTuesdayDay[0]
-        cursor.execute('SELECT tuesdayTimeWorked from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT tuesdayTimeWorked from Employees WHERE id=%s',[userId])
         fetchedUserTuesdayTimeWorked = [ x[0] for x in cursor.fetchall()]
         TuesdayTimeWorkedDb = fetchedUserTuesdayTimeWorked[0]
         workedTimeInSeconds = TuesdayTimeWorkedDb + timeDifferenceWhenLoggedIn
@@ -1477,52 +1602,52 @@ def Timer():
             TuesdayTimer.config(text=newTime)
             dbTime = TuesdayTimer.cget("text")
             timeXOut = int(time.time())
-            cursor.execute('UPDATE Employees SET tuesdayTimer=? WHERE id=?',(dbTime, userId))
-            cursor.execute('UPDATE Employees SET timeOnClose=? WHERE id=?',(timeXOut, userId))
-            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=? WHERE id=?',(workedTimeInSeconds, userId))
-            cursor.execute('UPDATE EmployeeHours SET TimeWorked=? WHERE EmployeeID=? AND Date=?',(workedTimeInSeconds, userId, currentDate))
+            cursor.execute('UPDATE Employees SET tuesdayTimer=%s WHERE id=%s',(dbTime, userId))
+            cursor.execute('UPDATE Employees SET timeOnClose=%s WHERE id=%s',(timeXOut, userId))
+            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=%s WHERE id=%s',(workedTimeInSeconds, userId))
+            cursor.execute('UPDATE EmployeeHours SET TimeWorked=%s WHERE EmployeeID=%s AND Date=%s',(workedTimeInSeconds, userId, currentDate))
         else:
-            cursor.execute('UPDATE Employees SET tuesdayDay=? WHERE id=?',(currentDate, userId))
-            cursor.execute('UPDATE Employees SET tuesdayTimer=? WHERE id=?',("0:00:00", userId))
-            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=? WHERE id=?',(0, userId))
-            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=? WHERE id=?',(0, userId))
-            cursor.execute('UPDATE Employees SET thursdayTimeWorked=? WHERE id=?',(0, userId))
-            cursor.execute('UPDATE Employees SET fridayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET tuesdayDay=%s WHERE id=%s',(currentDate, userId))
+            cursor.execute('UPDATE Employees SET tuesdayTimer=%s WHERE id=%s',("0:00:00", userId))
+            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=%s WHERE id=%s',(0, userId))
+            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=%s WHERE id=%s',(0, userId))
+            cursor.execute('UPDATE Employees SET thursdayTimeWorked=%s WHERE id=%s',(0, userId))
+            cursor.execute('UPDATE Employees SET fridayTimeWorked=%s WHERE id=%s',(0, userId))
             TuesdayTimer.config(text=newTime)
         WednesdayTimer.config(text="0:00:00")
         ThursdayTimer.config(text="0:00:00")
         FridayTimer.config(text="0:00:00")
     elif day == "Wednesday":
         getMondayDate = today - timedelta(days = 2)
-        cursor.execute('SELECT mondayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT mondayDay from Employees WHERE id=%s',[userId])
         fetchedUserMondayDay = [ x[0] for x in cursor.fetchall()]
         MondayDate = fetchedUserMondayDay[0]
         if str(getMondayDate) == MondayDate:
-            cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=?',[userId])
+            cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=%s',[userId])
             fetchedUserMondayTimeWorked = [ x[0] for x in cursor.fetchall()]
             MondayTimeWorkedDb = timedelta(seconds=fetchedUserMondayTimeWorked[0])
             MondayTimer.config(text=MondayTimeWorkedDb)
         else:
             MondayTimer.config(text="0:00:00")
-            cursor.execute('UPDATE Employees SET mondayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET mondayTimeWorked=%s WHERE id=%s',(0, userId))
         #
         getTuesdayDate = today - timedelta(days = 1)
-        cursor.execute('SELECT tuesdayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT tuesdayDay from Employees WHERE id=%s',[userId])
         fetchedUserTuesdayDay = [ x[0] for x in cursor.fetchall()]
         TuesdayDay = fetchedUserTuesdayDay[0]
         if str(getTuesdayDate) == TuesdayDay:
-            cursor.execute('SELECT tuesdayTimeWorked from Employees WHERE id=?',[userId])
+            cursor.execute('SELECT tuesdayTimeWorked from Employees WHERE id=%s',[userId])
             fetchedUserTuesdayTimeWorked = [ x[0] for x in cursor.fetchall()]
             TuesdayTimeWorkedDb = timedelta(seconds=fetchedUserTuesdayTimeWorked[0])
             TuesdayTimer.config(text=TuesdayTimeWorkedDb)
         else:
             TuesdayTimer.config(text="0:00:00")
-            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=%s WHERE id=%s',(0, userId))
         #
-        cursor.execute('SELECT wednesdayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT wednesdayDay from Employees WHERE id=%s',[userId])
         fetchedUserWednesdayDay = [ x[0] for x in cursor.fetchall()]
         WednesdayDay = fetchedUserWednesdayDay[0]
-        cursor.execute('SELECT wednesdayTimeWorked from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT wednesdayTimeWorked from Employees WHERE id=%s',[userId])
         fetchedUserWednesdayTimeWorked = [ x[0] for x in cursor.fetchall()]
         WednesdayTimeWorkedDb = fetchedUserWednesdayTimeWorked[0]
         workedTimeInSeconds = WednesdayTimeWorkedDb + timeDifferenceWhenLoggedIn
@@ -1534,63 +1659,63 @@ def Timer():
             WednesdayTimer.config(text=newTime)
             dbTime = WednesdayTimer.cget("text")
             timeXOut = int(time.time())
-            cursor.execute('UPDATE Employees SET wednesdayTimer=? WHERE id=?',(dbTime, userId))
-            cursor.execute('UPDATE Employees SET timeOnClose=? WHERE id=?',(timeXOut, userId))
-            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=? WHERE id=?',(workedTimeInSeconds, userId))
-            cursor.execute('UPDATE EmployeeHours SET TimeWorked=? WHERE EmployeeID=? AND Date=?',(workedTimeInSeconds, userId, currentDate))
+            cursor.execute('UPDATE Employees SET wednesdayTimer=%s WHERE id=%s',(dbTime, userId))
+            cursor.execute('UPDATE Employees SET timeOnClose=%s WHERE id=%s',(timeXOut, userId))
+            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=%s WHERE id=%s',(workedTimeInSeconds, userId))
+            cursor.execute('UPDATE EmployeeHours SET TimeWorked=%s WHERE EmployeeID=%s AND Date=%s',(workedTimeInSeconds, userId, currentDate))
         else:
-            cursor.execute('UPDATE Employees SET wednesdayDay=? WHERE id=?',(currentDate, userId))
-            cursor.execute('UPDATE Employees SET wednesdayTimer=? WHERE id=?',("0:00:00", userId))
-            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=? WHERE id=?',(0, userId))
-            cursor.execute('UPDATE Employees SET thursdayTimeWorked=? WHERE id=?',(0, userId))
-            cursor.execute('UPDATE Employees SET fridayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET wednesdayDay=%s WHERE id=%s',(currentDate, userId))
+            cursor.execute('UPDATE Employees SET wednesdayTimer=%s WHERE id=%s',("0:00:00", userId))
+            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=%s WHERE id=%s',(0, userId))
+            cursor.execute('UPDATE Employees SET thursdayTimeWorked=%s WHERE id=%s',(0, userId))
+            cursor.execute('UPDATE Employees SET fridayTimeWorked=%s WHERE id=%s',(0, userId))
             WednesdayTimer.config(text=newTime)
         ThursdayTimer.config(text="0:00:00")
         FridayTimer.config(text="0:00:00")
     elif day == "Thursday":
         getMondayDate = today - timedelta(days = 3)
-        cursor.execute('SELECT mondayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT mondayDay from Employees WHERE id=%s',[userId])
         fetchedUserMondayDay = [ x[0] for x in cursor.fetchall()]
         MondayDate = fetchedUserMondayDay[0]
         if str(getMondayDate) == MondayDate:
-            cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=?',[userId])
+            cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=%s',[userId])
             fetchedUserMondayTimeWorked = [ x[0] for x in cursor.fetchall()]
             MondayTimeWorkedDb = timedelta(seconds=fetchedUserMondayTimeWorked[0])
             MondayTimer.config(text=MondayTimeWorkedDb)
         else:
             MondayTimer.config(text="0:00:00")
-            cursor.execute('UPDATE Employees SET mondayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET mondayTimeWorked=%s WHERE id=%s',(0, userId))
         #
         getTuesdayDate = today - timedelta(days = 2)
-        cursor.execute('SELECT tuesdayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT tuesdayDay from Employees WHERE id=%s',[userId])
         fetchedUserTuesdayDay = [ x[0] for x in cursor.fetchall()]
         TuesdayDay = fetchedUserTuesdayDay[0]
         if str(getTuesdayDate) == TuesdayDay:
-            cursor.execute('SELECT tuesdayTimeWorked from Employees WHERE id=?',[userId])
+            cursor.execute('SELECT tuesdayTimeWorked from Employees WHERE id=%s',[userId])
             fetchedUserTuesdayTimeWorked = [ x[0] for x in cursor.fetchall()]
             TuesdayTimeWorkedDb = timedelta(seconds=fetchedUserTuesdayTimeWorked[0])
             TuesdayTimer.config(text=TuesdayTimeWorkedDb)
         else:
             TuesdayTimer.config(text="0:00:00")
-            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=%s WHERE id=%s',(0, userId))
         #
         getWednesdayDate = today - timedelta(days = 1)
-        cursor.execute('SELECT wednesdayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT wednesdayDay from Employees WHERE id=%s',[userId])
         fetchedUserWednesdayDay = [ x[0] for x in cursor.fetchall()]
         WednesdayDay = fetchedUserWednesdayDay[0]
         if str(getWednesdayDate) == WednesdayDay:
-            cursor.execute('SELECT wednesdayTimeWorked from Employees WHERE id=?',[userId])
+            cursor.execute('SELECT wednesdayTimeWorked from Employees WHERE id=%s',[userId])
             fetchedUserWednesdayTimeWorked = [ x[0] for x in cursor.fetchall()]
             WednesdayTimeWorkedDb = timedelta(seconds=fetchedUserWednesdayTimeWorked[0])
             WednesdayTimer.config(text=WednesdayTimeWorkedDb)
         else:
             WednesdayTimer.config(text="0:00:00")
-            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=%s WHERE id=%s',(0, userId))
         #
-        cursor.execute('SELECT thursdayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT thursdayDay from Employees WHERE id=%s',[userId])
         fetchedUserThursdayDay = [ x[0] for x in cursor.fetchall()]
         ThursdayDay = fetchedUserThursdayDay[0]
-        cursor.execute('SELECT thursdayTimeWorked from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT thursdayTimeWorked from Employees WHERE id=%s',[userId])
         fetchedUserThursdayTimeWorked = [ x[0] for x in cursor.fetchall()]
         ThursdayTimeWorkedDb = fetchedUserThursdayTimeWorked[0]
         workedTimeInSeconds = ThursdayTimeWorkedDb + timeDifferenceWhenLoggedIn
@@ -1602,77 +1727,77 @@ def Timer():
             ThursdayTimer.config(text=newTime)
             dbTime = ThursdayTimer.cget("text")
             timeXOut = int(time.time())
-            cursor.execute('UPDATE Employees SET thursdayTimer=? WHERE id=?',(dbTime, userId))
-            cursor.execute('UPDATE Employees SET timeOnClose=? WHERE id=?',(timeXOut, userId))
-            cursor.execute('UPDATE Employees SET thursdayTimeWorked=? WHERE id=?',(workedTimeInSeconds, userId))
-            cursor.execute('UPDATE EmployeeHours SET TimeWorked=? WHERE EmployeeID=? AND Date=?',(workedTimeInSeconds, userId, currentDate))
+            cursor.execute('UPDATE Employees SET thursdayTimer=%s WHERE id=%s',(dbTime, userId))
+            cursor.execute('UPDATE Employees SET timeOnClose=%s WHERE id=%s',(timeXOut, userId))
+            cursor.execute('UPDATE Employees SET thursdayTimeWorked=%s WHERE id=%s',(workedTimeInSeconds, userId))
+            cursor.execute('UPDATE EmployeeHours SET TimeWorked=%s WHERE EmployeeID=%s AND Date=%s',(workedTimeInSeconds, userId, currentDate))
         else:
-            cursor.execute('UPDATE Employees SET thursdayDay=? WHERE id=?',(currentDate, userId))
-            cursor.execute('UPDATE Employees SET thursdayTimer=? WHERE id=?',("0:00:00", userId))
-            cursor.execute('UPDATE Employees SET thursdayTimeWorked=? WHERE id=?',(0, userId))
-            cursor.execute('UPDATE Employees SET fridayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET thursdayDay=%s WHERE id=%s',(currentDate, userId))
+            cursor.execute('UPDATE Employees SET thursdayTimer=%s WHERE id=%s',("0:00:00", userId))
+            cursor.execute('UPDATE Employees SET thursdayTimeWorked=%s WHERE id=%s',(0, userId))
+            cursor.execute('UPDATE Employees SET fridayTimeWorked=%s WHERE id=%s',(0, userId))
             ThursdayTimer.config(text=newTime)
         FridayTimer.config(text="0:00:00")
 
     elif day == "Friday":
         getMondayDate = today - timedelta(days = 4)
-        cursor.execute('SELECT mondayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT mondayDay from Employees WHERE id=%s',[userId])
         fetchedUserMondayDay = [ x[0] for x in cursor.fetchall()]
         MondayDate = fetchedUserMondayDay[0]
         if str(getMondayDate) == MondayDate:
-            cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=?',[userId])
+            cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=%s',[userId])
             fetchedUserMondayTimeWorked = [ x[0] for x in cursor.fetchall()]
             MondayTimeWorkedDb = timedelta(seconds=fetchedUserMondayTimeWorked[0])
             MondayTimer.config(text=MondayTimeWorkedDb)
         else:
             MondayTimer.config(text="0:00:00")
-            cursor.execute('UPDATE Employees SET mondayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET mondayTimeWorked=%s WHERE id=%s',(0, userId))
         #
         getTuesdayDate = today - timedelta(days = 3)
-        cursor.execute('SELECT tuesdayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT tuesdayDay from Employees WHERE id=%s',[userId])
         fetchedUserTuesdayDay = [ x[0] for x in cursor.fetchall()]
         TuesdayDay = fetchedUserTuesdayDay[0]
         if str(getTuesdayDate) == TuesdayDay:
-            cursor.execute('SELECT tuesdayTimeWorked from Employees WHERE id=?',[userId])
+            cursor.execute('SELECT tuesdayTimeWorked from Employees WHERE id=%s',[userId])
             fetchedUserTuesdayTimeWorked = [ x[0] for x in cursor.fetchall()]
             TuesdayTimeWorkedDb = timedelta(seconds=fetchedUserTuesdayTimeWorked[0])
             TuesdayTimer.config(text=TuesdayTimeWorkedDb)
         else:
             TuesdayTimer.config(text="0:00:00")
-            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET tuesdayTimeWorked=%s WHERE id=%s',(0, userId))
         #
         getWednesdayDate = today - timedelta(days = 2)
-        cursor.execute('SELECT wednesdayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT wednesdayDay from Employees WHERE id=%s',[userId])
         fetchedUserWednesdayDay = [ x[0] for x in cursor.fetchall()]
         WednesdayDay = fetchedUserWednesdayDay[0]
         if str(getWednesdayDate) == WednesdayDay:
-            cursor.execute('SELECT wednesdayTimeWorked from Employees WHERE id=?',[userId])
+            cursor.execute('SELECT wednesdayTimeWorked from Employees WHERE id=%s',[userId])
             fetchedUserWednesdayTimeWorked = [ x[0] for x in cursor.fetchall()]
             WednesdayTimeWorkedDb = timedelta(seconds=fetchedUserWednesdayTimeWorked[0])
             WednesdayTimer.config(text=WednesdayTimeWorkedDb)
         else:
             WednesdayTimer.config(text="0:00:00")
-            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET wednesdayTimeWorked=%s WHERE id=%s',(0, userId))
         #
         getThursdayDate = today - timedelta(days = 1)
-        cursor.execute('SELECT thursdayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT thursdayDay from Employees WHERE id=%s',[userId])
         fetchedUserThursdayDay = [ x[0] for x in cursor.fetchall()]
         ThursdayDay = fetchedUserThursdayDay[0]
         #print(getThursdayDate)
         ##print(ThursdayDay)
         if str(getThursdayDate) == ThursdayDay:
-            cursor.execute('SELECT thursdayTimeWorked from Employees WHERE id=?',[userId])
+            cursor.execute('SELECT thursdayTimeWorked from Employees WHERE id=%s',[userId])
             fetchedUserThursdayTimeWorked = [ x[0] for x in cursor.fetchall()]
             ThursdayTimeWorkedDb = timedelta(seconds=fetchedUserThursdayTimeWorked[0])
             ThursdayTimer.config(text=ThursdayTimeWorkedDb)
         else:
             ThursdayTimer.config(text="0:00:00")
-            cursor.execute('UPDATE Employees SET thursdayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET thursdayTimeWorked=%s WHERE id=%s',(0, userId))
         #
-        cursor.execute('SELECT fridayDay from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT fridayDay from Employees WHERE id=%s',[userId])
         fetchedUserFridayDay = [ x[0] for x in cursor.fetchall()]
         FridayDay = fetchedUserFridayDay[0]
-        cursor.execute('SELECT fridayTimeWorked from Employees WHERE id=?',[userId])
+        cursor.execute('SELECT fridayTimeWorked from Employees WHERE id=%s',[userId])
         fetchedUserFridayTimeWorked = [ x[0] for x in cursor.fetchall()]
         FridayTimeWorkedDb = fetchedUserFridayTimeWorked[0]
         workedTimeInSeconds = FridayTimeWorkedDb + timeDifferenceWhenLoggedIn
@@ -1684,14 +1809,14 @@ def Timer():
             FridayTimer.config(text=newTime)
             dbTime = FridayTimer.cget("text")
             timeXOut = int(time.time())
-            cursor.execute('UPDATE Employees SET fridayTimer=? WHERE id=?',(dbTime, userId))
-            cursor.execute('UPDATE Employees SET timeOnClose=? WHERE id=?',(timeXOut, userId))
-            cursor.execute('UPDATE Employees SET fridayTimeWorked=? WHERE id=?',(workedTimeInSeconds, userId))
-            cursor.execute('UPDATE EmployeeHours SET TimeWorked=? WHERE EmployeeID=? AND Date=?',(workedTimeInSeconds, userId, currentDate))
+            cursor.execute('UPDATE Employees SET fridayTimer=%s WHERE id=%s',(dbTime, userId))
+            cursor.execute('UPDATE Employees SET timeOnClose=%s WHERE id=%s',(timeXOut, userId))
+            cursor.execute('UPDATE Employees SET fridayTimeWorked=%s WHERE id=%s',(workedTimeInSeconds, userId))
+            cursor.execute('UPDATE EmployeeHours SET TimeWorked=%s WHERE EmployeeID=%s AND Date=%s',(workedTimeInSeconds, userId, currentDate))
         else:
-            cursor.execute('UPDATE Employees SET fridayDay=? WHERE id=?',(currentDate, userId))
-            cursor.execute('UPDATE Employees SET fridayTimer=? WHERE id=?',("0:00:00", userId))
-            cursor.execute('UPDATE Employees SET fridayTimeWorked=? WHERE id=?',(0, userId))
+            cursor.execute('UPDATE Employees SET fridayDay=%s WHERE id=%s',(currentDate, userId))
+            cursor.execute('UPDATE Employees SET fridayTimer=%s WHERE id=%s',("0:00:00", userId))
+            cursor.execute('UPDATE Employees SET fridayTimeWorked=%s WHERE id=%s',(0, userId))
             FridayTimer.config(text=newTime)
     
     timeDifferenceWhenLoggedIn = 0
@@ -1732,84 +1857,84 @@ def ClockIn():
     counting = True
     ClockedInTime = ClockLabel.cget("text")
     userId = UserIDfound.cget("text")
-    cursor.execute('UPDATE Employees SET clockedIn=? WHERE id=?',(1, userId))
+    cursor.execute('UPDATE Employees SET clockedIn=%s WHERE id=%s',(1, userId))
 
     #clickClockedIn = Label(ClockWindow, text="Clocked In: " + ClockedInTime, font=("Helvetica", 15), fg="white", bg="green")
     #clickClockedIn.pack()
     try:
-        cursor.execute('SELECT ClockedIn1 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedIn1 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedIn1 = [ x[0] for x in cursor.fetchall()]
         fetchedTime1 = fetchedClockedIn1[0]
 
-        cursor.execute('SELECT ClockedIn2 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedIn2 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedIn2 = [ x[0] for x in cursor.fetchall()]
         fetchedTime2 = fetchedClockedIn2[0]
 
-        cursor.execute('SELECT ClockedIn3 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedIn3 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedIn3 = [ x[0] for x in cursor.fetchall()]
         fetchedTime3 = fetchedClockedIn3[0]
 
-        cursor.execute('SELECT ClockedIn4 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedIn4 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedIn4 = [ x[0] for x in cursor.fetchall()]
         fetchedTime4 = fetchedClockedIn4[0]
 
-        cursor.execute('SELECT ClockedIn5 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedIn5 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedIn5 = [ x[0] for x in cursor.fetchall()]
         fetchedTime5 = fetchedClockedIn5[0]
 
-        cursor.execute('SELECT ClockedIn6 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedIn6 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedIn6 = [ x[0] for x in cursor.fetchall()]
         fetchedTime6 = fetchedClockedIn6[0]
 
-        cursor.execute('SELECT ClockedIn7 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedIn7 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedIn7 = [ x[0] for x in cursor.fetchall()]
         fetchedTime7 = fetchedClockedIn7[0]
 
-        cursor.execute('SELECT ClockedIn8 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedIn8 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedIn8 = [ x[0] for x in cursor.fetchall()]
         fetchedTime8 = fetchedClockedIn8[0]
 
-        cursor.execute('SELECT ClockedIn9 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedIn9 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedIn9 = [ x[0] for x in cursor.fetchall()]
         fetchedTime9 = fetchedClockedIn9[0]
 
-        cursor.execute('SELECT ClockedIn10 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedIn10 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedIn10 = [ x[0] for x in cursor.fetchall()]
         fetchedTime10 = fetchedClockedIn10[0]
         print("entrou no if")
         if fetchedTime1 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedIn1=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedIn1=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedInTime, currentDate, userId))                                    
         elif fetchedTime2 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedIn2=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedIn2=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedInTime, currentDate, userId))
         elif fetchedTime3 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedIn3=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedIn3=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedInTime, currentDate, userId))
         elif fetchedTime4 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedIn4=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedIn4=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedInTime, currentDate, userId))
         elif fetchedTime5 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedIn5=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedIn5=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedInTime, currentDate, userId))
         elif fetchedTime6 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedIn6=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedIn6=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedInTime, currentDate, userId))
         elif fetchedTime7 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedIn7=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedIn7=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedInTime, currentDate, userId))
         elif fetchedTime8 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedIn8=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedIn8=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedInTime, currentDate, userId))
         elif fetchedTime9 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedIn9=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedIn9=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedInTime, currentDate, userId))
         else:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedIn10=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedIn10=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedInTime, currentDate, userId))
     except:
         cursor.execute('''INSERT INTO EmployeeHours (EmployeeID, Date, ClockedIn1) 
-                        VALUES (?, ?, ?)''', 
+                        VALUES (%s, %s, %s)''', 
                         [userId, currentDate, ClockedInTime])
         print("created new date")
     
@@ -1824,87 +1949,87 @@ def ClockOut():
     #clickClockedOut = Label(ClockWindow, text="Clocked Out: " + ClockedOutTime, font=("Helvetica", 15), fg="white", bg="red")
     #clickClockedOut.pack()
     userId = UserIDfound.cget("text")
-    cursor.execute('UPDATE Employees SET clockedIn=? WHERE id=?',(0, userId))
-    cursor.execute('UPDATE Employees SET timeOnClose=? WHERE id=?',(0, userId))
+    cursor.execute('UPDATE Employees SET clockedIn=%s WHERE id=%s',(0, userId))
+    cursor.execute('UPDATE Employees SET timeOnClose=%s WHERE id=%s',(0, userId))
 
     ClockInButton.place(x=1200, y=3)
     counting = False
     try:
-        cursor.execute('SELECT ClockedOut1 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedOut1 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedOut1 = [ x[0] for x in cursor.fetchall()]
         fetchedTime1 = fetchedClockedOut1[0]
         
-        cursor.execute('SELECT ClockedOut2 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedOut2 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedOut2 = [ x[0] for x in cursor.fetchall()]
         fetchedTime2 = fetchedClockedOut2[0]
         
-        cursor.execute('SELECT ClockedOut3 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedOut3 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedOut3 = [ x[0] for x in cursor.fetchall()]
         fetchedTime3 = fetchedClockedOut3[0]
         
-        cursor.execute('SELECT ClockedOut4 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedOut4 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedOut4 = [ x[0] for x in cursor.fetchall()]
         fetchedTime4 = fetchedClockedOut4[0]
         
-        cursor.execute('SELECT ClockedOut5 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedOut5 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedOut5 = [ x[0] for x in cursor.fetchall()]
         fetchedTime5 = fetchedClockedOut5[0]
         
-        cursor.execute('SELECT ClockedOut6 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedOut6 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedOut6 = [ x[0] for x in cursor.fetchall()]
         fetchedTime6 = fetchedClockedOut6[0]
         
-        cursor.execute('SELECT ClockedOut7 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedOut7 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedOut7 = [ x[0] for x in cursor.fetchall()]
         fetchedTime7 = fetchedClockedOut7[0]
         
-        cursor.execute('SELECT ClockedOut8 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedOut8 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedOut8 = [ x[0] for x in cursor.fetchall()]
         fetchedTime8 = fetchedClockedOut8[0]
         
-        cursor.execute('SELECT ClockedOut9 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedOut9 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedOut9 = [ x[0] for x in cursor.fetchall()]
         fetchedTime9 = fetchedClockedOut9[0]
         
-        cursor.execute('SELECT ClockedOut10 from EmployeeHours WHERE Date=? AND EmployeeID=?',[currentDate, userId])
+        cursor.execute('SELECT ClockedOut10 from EmployeeHours WHERE Date=%s AND EmployeeID=%s',[currentDate, userId])
         fetchedClockedOut10 = [ x[0] for x in cursor.fetchall()]
         fetchedTime10 = fetchedClockedOut10[0]
 
         print("entrou no if clockout")
         if fetchedTime1 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedOut1=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedOut1=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedOutTime, currentDate, userId))                                    
         elif fetchedTime2 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedOut2=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedOut2=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedOutTime, currentDate, userId))
         elif fetchedTime3 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedOut3=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedOut3=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedOutTime, currentDate, userId))
         elif fetchedTime4 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedOut4=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedOut4=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedOutTime, currentDate, userId))
         elif fetchedTime5 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedOut5=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedOut5=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedOutTime, currentDate, userId))
         elif fetchedTime6 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedOut6=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedOut6=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedOutTime, currentDate, userId))
         elif fetchedTime7 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedOut7=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedOut7=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedOutTime, currentDate, userId))
         elif fetchedTime8 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedOut8=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedOut8=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedOutTime, currentDate, userId))
         elif fetchedTime9 == None:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedOut9=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedOut9=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedOutTime, currentDate, userId))
         else:
-            cursor.execute('''UPDATE EmployeeHours SET ClockedOut10=? WHERE Date=? AND EmployeeID=?''', 
+            cursor.execute('''UPDATE EmployeeHours SET ClockedOut10=%s WHERE Date=%s AND EmployeeID=%s''', 
                                 (ClockedOutTime, currentDate, userId))
         connect.commit()
     except:
         cursor.execute('''INSERT INTO EmployeeHours (EmployeeID, Date, ClockedOut1) 
-                                    VALUES (?, ?, ?)''', 
+                                    VALUES (%s, %s, %s)''', 
                                     [userId, currentDate, ClockedOutTime])
         print("inserted exception clockout")
     connect.commit()
@@ -2061,6 +2186,7 @@ def Logout():
     MainWindow.bind('<Return>', Login)
 
 def Login(self):
+    currentDateInSeconds = int(time.time())
     cursor.execute('SELECT * from Employees')
     AllUsers = cursor.fetchall()
     for Users in AllUsers:
@@ -2070,54 +2196,77 @@ def Login(self):
         getPassword = getUser[2]
         getAccess = getUser[6]
         clockedIn = getUser[17]
+        hardwareId = getUser[34]
         if getUsername == Username.get() and getPassword == Password.get():
-            LoggedInWindow.place(relwidth=1, relheight=1, x=0,y=40)
-            ClockWindow.place(relwidth=0.135, relheight=0.61, x=1290,y=300)
-            LoginScreen.place_forget()
-            currentTab.config(text="Auto Quote")
-            UserIDfound.config(text=getUserID)
-            TopMenuButtons.place(relwidth=1, relheight=0.04, x=0,y=0)
-            if getAccess == 999:
-                AdminPanelButton.place(x=1350, y=5)
-                for employee in employees:
-                    data = []
+            cursor.execute('SELECT HWIDTime from Employees WHERE id=%s', [getUserID])
+            timedelay = [ x[0] for x in cursor.fetchall()]
+            timedelayed = timedelay[0]
+            if timedelayed >= currentDateInSeconds:
+                messagebox.showerror("Error", "This computer is locked from accessing with this user. Only one computer per user allowed.")
+                return
+            if hardwareId == None:
+                cursor.execute('UPDATE Employees SET HWID=%s WHERE id=%s', (HWID, getUserID))
+                connect.commit()
+                cursor.execute('SELECT HWID from Employees WHERE id=%s', [getUserID])
+                hardwareid = [ x[0] for x in cursor.fetchall()]
+                hardwareId = hardwareid[0]
+            if hardwareId == HWID:
+                LoggedInWindow.place(relwidth=1, relheight=1, x=0,y=40)
+                ClockWindow.place(relwidth=0.135, relheight=0.61, x=1290,y=300)
+                LoginScreen.place_forget()
+                currentTab.config(text="Auto Quote")
+                UserIDfound.config(text=getUserID)
+                TopMenuButtons.place(relwidth=1, relheight=0.04, x=0,y=0)
+                if getAccess == 999:
+                    AdminPanelButton.place(x=1350, y=5)
                     for employee in employees:
-                        data.append(employee[1])
-                    employeesSorted = sorted(data)
-                    UpdateEmployees(employeesSorted)
-            else:
-                AdminPanelButton.place_forget()
+                        data = []
+                        for employee in employees:
+                            data.append(employee[1])
+                        employeesSorted = sorted(data)
+                        UpdateEmployees(employeesSorted)
+                else:
+                    AdminPanelButton.place_forget()
 
-            if clockedIn == 1:
-                ClockOutButton.place(x=1200, y=3)
-                ClockInButton.place_forget()
-                global counting
-                global timeDifferenceWhenLoggedIn
-                timeQuittedWhileLoggedIn = int(getUser[33])
-                timeWhenLoggedIn = int(time.time())
-                timeDifferenceWhenLoggedIn = timeWhenLoggedIn - timeQuittedWhileLoggedIn
-                #print(timeDifferenceWhenLoggedIn)
-                showDatesAndHoursWorked()
-                counting = True
-            else:
-                showDatesAndHoursWorked()
-                ClockOutButton.place_forget()
-                ClockInButton.place(x=1200, y=3)
+                if clockedIn == 1:
+                    ClockOutButton.place(x=1200, y=3)
+                    ClockInButton.place_forget()
+                    global counting
+                    global timeDifferenceWhenLoggedIn
+                    timeQuittedWhileLoggedIn = int(getUser[33])
+                    timeWhenLoggedIn = int(time.time())
+                    timeDifferenceWhenLoggedIn = timeWhenLoggedIn - timeQuittedWhileLoggedIn
+                    #print(timeDifferenceWhenLoggedIn)
+                    showDatesAndHoursWorked()
+                    counting = True
+                else:
+                    showDatesAndHoursWorked()
+                    ClockOutButton.place_forget()
+                    ClockInButton.place(x=1200, y=3)
 
-            getHoursWorkedOnTheDay()
+                getHoursWorkedOnTheDay()
 
-            for client in clients:
-                data = []
                 for client in clients:
-                    data.append(client[1])
-                clientes = sorted(data)
-                Update(clientes)
-        
-            #Label(LoginScreen, text="Wrong username or password", background="black", fg="black").place(x=230, y=379)
-            #print("still binded")   
-            MainWindow.unbind('<Return>', LoginBind)
-            Clock()
-            return
+                    data = []
+                    for client in clients:
+                        data.append(client[1])
+                    clientes = sorted(data)
+                    Update(clientes)
+
+                #Label(LoginScreen, text="Wrong username or password", background="black", fg="black").place(x=230, y=379)
+                #print("still binded")   
+                MainWindow.unbind('<Return>', LoginBind)
+                Clock()
+                return
+            else:
+                proceed = messagebox.askyesno("LOGIN WARNING","You are logging in on a different computer, if you proceed you will be blocked from login on any other computer for 15 days. Are you sure you want to proceed?")
+                if proceed:
+                    delayPeriod = 15 * 24 * 60 * 60
+                    dateToUnlockPC = currentDateInSeconds + delayPeriod
+                    cursor.execute('UPDATE Employees SET HWID=%s WHERE id=%s', (HWID, getUserID))
+                    cursor.execute('UPDATE Employees SET HWIDTime=%s WHERE id=%s', (dateToUnlockPC, getUserID))
+                    connect.commit()
+                    Login()
         else:
             Label(LoginScreen, text="Wrong username or password", background="black", fg="red") .place(x=230, y=379)
 
@@ -2148,8 +2297,8 @@ def CreateUserPopUp():
         EmployeePhoto = NewEmployeeSSN.get()
         cursor.execute('''INSERT INTO Employees (Username, Password, FirstName, MiddleName, LastName, Access, email, phone, address,
                             apt, city, state, zip, SSN, salary, photo) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                                    ?, ?, ?, ?, ?)''', 
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                                    %s, %s, %s, %s, %s)''', 
                             [EmployeeUsername, EmployeePassword, EmployeeFirstName, EmployeeMiddleName, EmployeeLastName, EmployeeAccess, EmployeeEmail,
                              EmployeePhone, EmployeeAddress, EmployeeApt, EmployeeCity, EmployeeState, EmployeeZip, EmployeeSSN, EmployeeSalary, EmployeePhoto])
         connect.commit()
@@ -2405,9 +2554,8 @@ def ManageUsersPopUp():
         EmployeeSSN = EmployeeSSNEntry.get()
         EmployeeSalary = EmployeeSalaryEntry.get()
         EmployeePhoto = EmployeeSSNEntry.get()
-        ##REVISE
-        cursor.execute('''UPDATE Employees SET Username=?, Password=?, FirstName=?, MiddleName=?, LastName=?, Access=?, email=?, phone=?, address=?,
-                            apt=?, city=?, state=?, zip=?, SSN=?, salary=?, photo=? WHERE id=?''', 
+        cursor.execute('''UPDATE Employees SET Username=%s, Password=%s, FirstName=%s, MiddleName=%s, LastName=%s, Access=%s, email=%s, phone=%s, address=%s,
+                            apt=%s, city=%s, state=%s, zip=%s, SSN=%s, salary=%s, photo=%s WHERE id=%s''', 
                             (EmployeeUsername, EmployeePassword, EmployeeFirstName, EmployeeMiddleName, EmployeeLastName, EmployeeAccess, EmployeeEmail,
                              EmployeePhone, EmployeeAddress, EmployeeApt, EmployeeCity, EmployeeState, EmployeeZip, EmployeeSSN, EmployeeSalary, EmployeePhoto, EmployeeID))
         connect.commit()
@@ -2625,7 +2773,7 @@ def hoursCheckPopUp():
     empFirst = EmployeeFirstName.cget("text")
     empMiddle = EmployeeMiddleName.cget("text")
     empLast = EmployeeLastName.cget("text")
-    cursor.execute('SELECT salary from Employees WHERE id=?',[empID])
+    cursor.execute('SELECT salary from Employees WHERE id=%s',[empID])
     fetchedEmpID = [ x[0] for x in cursor.fetchall()]
     EmployeeSalary = fetchedEmpID[0]
     salaryConvertedTimes100 = (float(EmployeeSalary) * 100.0)
@@ -2639,12 +2787,12 @@ def hoursCheckPopUp():
     def updateDateLoop():
         index = 0
         for i in dates:
-            cursor.execute('SELECT Date from EmployeeHours WHERE EmployeeID=?',[empID])
+            cursor.execute('SELECT Date from EmployeeHours WHERE EmployeeID=%s',[empID])
             #fetchedDate = [ x[0] for x in cursor.fetchall()]
             for fetchedDate in cursor.fetchall():
                 getDateFromDb = fetchedDate[0]
                 if getDateFromDb == str(i.strftime('%Y-%m-%d')):
-                    cursor.execute('SELECT TimeWorked from EmployeeHours WHERE EmployeeID=?',[empID])
+                    cursor.execute('SELECT TimeWorked from EmployeeHours WHERE EmployeeID=%s',[empID])
                     fetchedTimeWorked = [ x[0] for x in cursor.fetchall()]
                     getTimeWorkedFromDb = fetchedTimeWorked[index]
                     index += 1
@@ -2653,10 +2801,10 @@ def hoursCheckPopUp():
                     labelHoursWorked = Label(anotherFrame, text=f"Hours Worked: {timedelta(seconds=getTimeWorkedFromDb)}", font=("Arial", 15), background="#516CC2", fg="white")
                     labelHoursWorked.pack()
                     totalTimeWorked.append(getTimeWorkedFromDb)
-                    cursor.execute('SELECT ClockedIn1 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedIn1 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedIn1 = [ x[0] for x in cursor.fetchall()]
                     getClockedIn1FromDb = fetchedClockedIn1[0]
-                    cursor.execute('SELECT ClockedOut1 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedOut1 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedOut1 = [ x[0] for x in cursor.fetchall()]
                     getClockedOut1FromDb = fetchedClockedOut1[0]
                     if getClockedIn1FromDb != None:
@@ -2665,10 +2813,10 @@ def hoursCheckPopUp():
                     if getClockedOut1FromDb != None:
                         labelClockedOut1 = Label(anotherFrame, text=f"{getClockedOut1FromDb}", font=("Arial", 15), background="red", fg="white")
                         labelClockedOut1.pack()
-                    cursor.execute('SELECT ClockedIn2 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedIn2 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedIn2 = [ x[0] for x in cursor.fetchall()]
                     getClockedIn2FromDb = fetchedClockedIn2[0]
-                    cursor.execute('SELECT ClockedOut2 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedOut2 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedOut2 = [ x[0] for x in cursor.fetchall()]
                     getClockedOut2FromDb = fetchedClockedOut2[0]
                     if getClockedIn2FromDb != None:
@@ -2677,10 +2825,10 @@ def hoursCheckPopUp():
                     if getClockedOut2FromDb != None:
                         labelClockedOut2 = Label(anotherFrame, text=f"{getClockedOut2FromDb}", font=("Arial", 15), background="red", fg="white")
                         labelClockedOut2.pack()
-                    cursor.execute('SELECT ClockedIn3 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedIn3 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedIn3 = [ x[0] for x in cursor.fetchall()]
                     getClockedIn3FromDb = fetchedClockedIn3[0]
-                    cursor.execute('SELECT ClockedOut3 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedOut3 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedOut3 = [ x[0] for x in cursor.fetchall()]
                     getClockedOut3FromDb = fetchedClockedOut3[0]
                     if getClockedIn3FromDb != None:
@@ -2689,10 +2837,10 @@ def hoursCheckPopUp():
                     if getClockedOut3FromDb != None:
                         labelClockedOut3 = Label(anotherFrame, text=f"{getClockedOut3FromDb}", font=("Arial", 15), background="red", fg="white")
                         labelClockedOut3.pack()
-                    cursor.execute('SELECT ClockedIn4 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedIn4 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedIn4 = [ x[0] for x in cursor.fetchall()]
                     getClockedIn4FromDb = fetchedClockedIn4[0]
-                    cursor.execute('SELECT ClockedOut4 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedOut4 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedOut4 = [ x[0] for x in cursor.fetchall()]
                     getClockedOut4FromDb = fetchedClockedOut4[0]
                     if getClockedIn4FromDb != None:
@@ -2701,10 +2849,10 @@ def hoursCheckPopUp():
                     if getClockedOut4FromDb != None:
                         labelClockedOut4 = Label(anotherFrame, text=f"{getClockedOut4FromDb}", font=("Arial", 15), background="red", fg="white")
                         labelClockedOut4.pack()
-                    cursor.execute('SELECT ClockedIn5 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedIn5 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedIn5 = [ x[0] for x in cursor.fetchall()]
                     getClockedIn5FromDb = fetchedClockedIn5[0]
-                    cursor.execute('SELECT ClockedOut5 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedOut5 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedOut5 = [ x[0] for x in cursor.fetchall()]
                     getClockedOut5FromDb = fetchedClockedOut5[0]
                     if getClockedIn5FromDb != None:
@@ -2713,10 +2861,10 @@ def hoursCheckPopUp():
                     if getClockedOut5FromDb != None:
                         labelClockedOut5 = Label(anotherFrame, text=f"{getClockedOut5FromDb}", font=("Arial", 15), background="red", fg="white")
                         labelClockedOut5.pack()
-                    cursor.execute('SELECT ClockedIn6 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedIn6 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedIn6 = [ x[0] for x in cursor.fetchall()]
                     getClockedIn6FromDb = fetchedClockedIn6[0]
-                    cursor.execute('SELECT ClockedOut6 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedOut6 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedOut6 = [ x[0] for x in cursor.fetchall()]
                     getClockedOut6FromDb = fetchedClockedOut6[0]
                     if getClockedIn6FromDb != None:
@@ -2725,10 +2873,10 @@ def hoursCheckPopUp():
                     if getClockedOut6FromDb != None:
                         labelClockedOut6 = Label(anotherFrame, text=f"{getClockedOut6FromDb}", font=("Arial", 15), background="red", fg="white")
                         labelClockedOut6.pack()
-                    cursor.execute('SELECT ClockedIn7 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedIn7 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedIn7 = [ x[0] for x in cursor.fetchall()]
                     getClockedIn7FromDb = fetchedClockedIn7[0]
-                    cursor.execute('SELECT ClockedOut7 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedOut7 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedOut7 = [ x[0] for x in cursor.fetchall()]
                     getClockedOut7FromDb = fetchedClockedOut7[0]
                     if getClockedIn7FromDb != None:
@@ -2737,10 +2885,10 @@ def hoursCheckPopUp():
                     if getClockedOut7FromDb != None:
                         labelClockedOut7 = Label(anotherFrame, text=f"{getClockedOut7FromDb}", font=("Arial", 15), background="red", fg="white")
                         labelClockedOut7.pack()
-                    cursor.execute('SELECT ClockedIn8 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedIn8 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedIn8 = [ x[0] for x in cursor.fetchall()]
                     getClockedIn8FromDb = fetchedClockedIn8[0]
-                    cursor.execute('SELECT ClockedOut8 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedOut8 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedOut8 = [ x[0] for x in cursor.fetchall()]
                     getClockedOut8FromDb = fetchedClockedOut8[0]
                     if getClockedIn8FromDb != None:
@@ -2749,10 +2897,10 @@ def hoursCheckPopUp():
                     if getClockedOut8FromDb != None:
                         labelClockedOut8 = Label(anotherFrame, text=f"{getClockedOut8FromDb}", font=("Arial", 15), background="red", fg="white")
                         labelClockedOut8.pack()
-                    cursor.execute('SELECT ClockedIn9 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedIn9 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedIn9 = [ x[0] for x in cursor.fetchall()]
                     getClockedIn9FromDb = fetchedClockedIn9[0]
-                    cursor.execute('SELECT ClockedOut9 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedOut9 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedOut9 = [ x[0] for x in cursor.fetchall()]
                     getClockedOut9FromDb = fetchedClockedOut9[0]
                     if getClockedIn9FromDb != None:
@@ -2761,10 +2909,10 @@ def hoursCheckPopUp():
                     if getClockedOut9FromDb != None:
                         labelClockedOut9 = Label(anotherFrame, text=f"{getClockedOut9FromDb}", font=("Arial", 15), background="red", fg="white")
                         labelClockedOut9.pack()
-                    cursor.execute('SELECT ClockedIn10 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedIn10 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedIn10 = [ x[0] for x in cursor.fetchall()]
                     getClockedIn10FromDb = fetchedClockedIn10[0]
-                    cursor.execute('SELECT ClockedOut10 from EmployeeHours WHERE EmployeeID=? AND Date=?',[empID, getDateFromDb])
+                    cursor.execute('SELECT ClockedOut10 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[empID, getDateFromDb])
                     fetchedClockedOut10 = [ x[0] for x in cursor.fetchall()]
                     getClockedOut10FromDb = fetchedClockedOut10[0]
                     if getClockedIn10FromDb != None:
@@ -2783,29 +2931,29 @@ def hoursCheckPopUp():
 
 def calculateSalary():
     userID = UserIDfound.cget("text")
-    cursor.execute('SELECT salary from Employees WHERE id=?',[userID])
+    cursor.execute('SELECT salary from Employees WHERE id=%s',[userID])
     fetchedUserID = [ x[0] for x in cursor.fetchall()]
     EmployeeSalary = fetchedUserID[0]
     salaryConvertedTimes100 = (float(EmployeeSalary) * 100.0)
     divideSalaryBySeconds = (salaryConvertedTimes100 / 60.0) / 60.0
     
-    cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=?',[userID])
+    cursor.execute('SELECT mondayTimeWorked from Employees WHERE id=%s',[userID])
     fetchedMondayTimeWorked = [ x[0] for x in cursor.fetchall()]
     getMondayTimeWorked = fetchedMondayTimeWorked[0]
     #
-    cursor.execute('SELECT tuesdayTimeWorked from Employees WHERE id=?',[userID])
+    cursor.execute('SELECT tuesdayTimeWorked from Employees WHERE id=%s',[userID])
     fetchedTuesdayTimeWorked = [ x[0] for x in cursor.fetchall()]
     getTuesdayTimeWorked = fetchedTuesdayTimeWorked[0]  
     #
-    cursor.execute('SELECT wednesdayTimeWorked from Employees WHERE id=?',[userID])
+    cursor.execute('SELECT wednesdayTimeWorked from Employees WHERE id=%s',[userID])
     fetchedWednesdayTimeWorked = [ x[0] for x in cursor.fetchall()]
     getWednesdayTimeWorked = fetchedWednesdayTimeWorked[0]
     #
-    cursor.execute('SELECT thursdayTimeWorked from Employees WHERE id=?',[userID])
+    cursor.execute('SELECT thursdayTimeWorked from Employees WHERE id=%s',[userID])
     fetchedThursdayTimeWorked = [ x[0] for x in cursor.fetchall()]
     getThursdayTimeWorked = fetchedThursdayTimeWorked[0]
     #
-    cursor.execute('SELECT fridayTimeWorked from Employees WHERE id=?',[userID])
+    cursor.execute('SELECT fridayTimeWorked from Employees WHERE id=%s',[userID])
     fetchedFridayTimeWorked = [ x[0] for x in cursor.fetchall()]
     getFridayTimeWorked = fetchedFridayTimeWorked[0]
 
@@ -2878,10 +3026,10 @@ def getHoursWorkedOnTheDay():
         widget.destroy()
     try:    
         getEmployeeID = UserIDfound.cget("text")
-        cursor.execute('SELECT ClockedIn1 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedIn1 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedIn1 = [ x[0] for x in cursor.fetchall()]
         getClockedIn1FromDb = fetchedClockedIn1[0]
-        cursor.execute('SELECT ClockedOut1 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedOut1 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedOut1 = [ x[0] for x in cursor.fetchall()]
         getClockedOut1FromDb = fetchedClockedOut1[0]
         if getClockedIn1FromDb != None:
@@ -2890,10 +3038,10 @@ def getHoursWorkedOnTheDay():
         if getClockedOut1FromDb != None:
             labelClockedOut1 = Label(ClockWindow, text=f"{getClockedOut1FromDb}", font=("Arial", 15), background="red", fg="white")
             labelClockedOut1.pack()
-        cursor.execute('SELECT ClockedIn2 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedIn2 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedIn2 = [ x[0] for x in cursor.fetchall()]
         getClockedIn2FromDb = fetchedClockedIn2[0]
-        cursor.execute('SELECT ClockedOut2 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedOut2 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedOut2 = [ x[0] for x in cursor.fetchall()]
         getClockedOut2FromDb = fetchedClockedOut2[0]
         if getClockedIn2FromDb != None:
@@ -2902,10 +3050,10 @@ def getHoursWorkedOnTheDay():
         if getClockedOut2FromDb != None:
             labelClockedOut2 = Label(ClockWindow, text=f"{getClockedOut2FromDb}", font=("Arial", 15), background="red", fg="white")
             labelClockedOut2.pack()
-        cursor.execute('SELECT ClockedIn3 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedIn3 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedIn3 = [ x[0] for x in cursor.fetchall()]
         getClockedIn3FromDb = fetchedClockedIn3[0]
-        cursor.execute('SELECT ClockedOut3 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedOut3 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedOut3 = [ x[0] for x in cursor.fetchall()]
         getClockedOut3FromDb = fetchedClockedOut3[0]
         if getClockedIn3FromDb != None:
@@ -2914,10 +3062,10 @@ def getHoursWorkedOnTheDay():
         if getClockedOut3FromDb != None:
             labelClockedOut3 = Label(ClockWindow, text=f"{getClockedOut3FromDb}", font=("Arial", 15), background="red", fg="white")
             labelClockedOut3.pack()
-        cursor.execute('SELECT ClockedIn4 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedIn4 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedIn4 = [ x[0] for x in cursor.fetchall()]
         getClockedIn4FromDb = fetchedClockedIn4[0]
-        cursor.execute('SELECT ClockedOut4 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedOut4 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedOut4 = [ x[0] for x in cursor.fetchall()]
         getClockedOut4FromDb = fetchedClockedOut4[0]
         if getClockedIn4FromDb != None:
@@ -2926,10 +3074,10 @@ def getHoursWorkedOnTheDay():
         if getClockedOut4FromDb != None:
             labelClockedOut4 = Label(ClockWindow, text=f"{getClockedOut4FromDb}", font=("Arial", 15), background="red", fg="white")
             labelClockedOut4.pack()
-        cursor.execute('SELECT ClockedIn5 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedIn5 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedIn5 = [ x[0] for x in cursor.fetchall()]
         getClockedIn5FromDb = fetchedClockedIn5[0]
-        cursor.execute('SELECT ClockedOut5 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedOut5 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedOut5 = [ x[0] for x in cursor.fetchall()]
         getClockedOut5FromDb = fetchedClockedOut5[0]
         if getClockedIn5FromDb != None:
@@ -2938,10 +3086,10 @@ def getHoursWorkedOnTheDay():
         if getClockedOut5FromDb != None:
             labelClockedOut5 = Label(ClockWindow, text=f"{getClockedOut5FromDb}", font=("Arial", 15), background="red", fg="white")
             labelClockedOut5.pack()
-        cursor.execute('SELECT ClockedIn6 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedIn6 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedIn6 = [ x[0] for x in cursor.fetchall()]
         getClockedIn6FromDb = fetchedClockedIn6[0]
-        cursor.execute('SELECT ClockedOut6 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedOut6 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedOut6 = [ x[0] for x in cursor.fetchall()]
         getClockedOut6FromDb = fetchedClockedOut6[0]
         if getClockedIn6FromDb != None:
@@ -2950,10 +3098,10 @@ def getHoursWorkedOnTheDay():
         if getClockedOut6FromDb != None:
             labelClockedOut6 = Label(ClockWindow, text=f"{getClockedOut6FromDb}", font=("Arial", 15), background="red", fg="white")
             labelClockedOut6.pack()
-        cursor.execute('SELECT ClockedIn7 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedIn7 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedIn7 = [ x[0] for x in cursor.fetchall()]
         getClockedIn7FromDb = fetchedClockedIn7[0]
-        cursor.execute('SELECT ClockedOut7 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedOut7 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedOut7 = [ x[0] for x in cursor.fetchall()]
         getClockedOut7FromDb = fetchedClockedOut7[0]
         if getClockedIn7FromDb != None:
@@ -2962,10 +3110,10 @@ def getHoursWorkedOnTheDay():
         if getClockedOut7FromDb != None:
             labelClockedOut7 = Label(ClockWindow, text=f"{getClockedOut7FromDb}", font=("Arial", 15), background="red", fg="white")
             labelClockedOut7.pack()
-        cursor.execute('SELECT ClockedIn8 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedIn8 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedIn8 = [ x[0] for x in cursor.fetchall()]
         getClockedIn8FromDb = fetchedClockedIn8[0]
-        cursor.execute('SELECT ClockedOut8 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedOut8 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedOut8 = [ x[0] for x in cursor.fetchall()]
         getClockedOut8FromDb = fetchedClockedOut8[0]
         if getClockedIn8FromDb != None:
@@ -2974,10 +3122,10 @@ def getHoursWorkedOnTheDay():
         if getClockedOut8FromDb != None:
             labelClockedOut8 = Label(ClockWindow, text=f"{getClockedOut8FromDb}", font=("Arial", 15), background="red", fg="white")
             labelClockedOut8.pack()
-        cursor.execute('SELECT ClockedIn9 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedIn9 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedIn9 = [ x[0] for x in cursor.fetchall()]
         getClockedIn9FromDb = fetchedClockedIn9[0]
-        cursor.execute('SELECT ClockedOut9 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedOut9 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedOut9 = [ x[0] for x in cursor.fetchall()]
         getClockedOut9FromDb = fetchedClockedOut9[0]
         if getClockedIn9FromDb != None:
@@ -2986,10 +3134,10 @@ def getHoursWorkedOnTheDay():
         if getClockedOut9FromDb != None:
             labelClockedOut9 = Label(ClockWindow, text=f"{getClockedOut9FromDb}", font=("Arial", 15), background="red", fg="white")
             labelClockedOut9.pack()
-        cursor.execute('SELECT ClockedIn10 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedIn10 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedIn10 = [ x[0] for x in cursor.fetchall()]
         getClockedIn10FromDb = fetchedClockedIn10[0]
-        cursor.execute('SELECT ClockedOut10 from EmployeeHours WHERE EmployeeID=? AND Date=?',[getEmployeeID, currentDate])
+        cursor.execute('SELECT ClockedOut10 from EmployeeHours WHERE EmployeeID=%s AND Date=%s',[getEmployeeID, currentDate])
         fetchedClockedOut10 = [ x[0] for x in cursor.fetchall()]
         getClockedOut10FromDb = fetchedClockedOut10[0]
         if getClockedIn10FromDb != None:
@@ -3604,9 +3752,11 @@ AdminPanel = Frame(LoggedInWindow, bg="black")
 AdminPanel.place_forget()
     
 ttk.Separator(AdminPanel, orient="vertical").place(x=780,y=5, height=780, width=1)
-
-cursor.execute('SELECT * from Employees')
-employees = cursor.fetchall()
+try:
+    cursor.execute('SELECT * from Employees')
+    employees = cursor.fetchall()
+except:
+    pass
 
 employeeListFrame = Frame(AdminPanel)
 employeeListFrame.place(relwidth=0.2, relheight=0.3, x=610,y=90)

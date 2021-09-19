@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import tkinter as tk
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
 import sqlite3
 import io
 import os
@@ -568,8 +569,13 @@ def openDocument(self):
 def quote():
     #os.system('python seleniumProj.py')
     # get chromedriver
+    chrome_Options = Options()
+    chrome_Options.add_argument("--headless")
     PATH = r"chromedriver.exe"
-    driver = webdriver.Chrome(PATH)
+    CHROME_PATH = r"C:/Program Files/Google/Chrome/Application/chrome.exe"
+    chrome_Options.binary_location = CHROME_PATH
+
+    driver = webdriver.Chrome(executable_path=PATH, options=chrome_Options)
     # USER DATA
     accountName = NameInsured.get()
     accountPassword = emailEntry.get()
@@ -599,7 +605,8 @@ def quote():
         insertAccountPassword.send_keys(accountPassword)
         insertAccountPassword.send_keys(Keys.RETURN)
     print("input credentials")
-    #driver.close()
+    driver.get_screenshot_as_file("capture.png")
+    driver.close()
 
 def Load(self):
     #connect = sqlite3.connect('MsClients.db')
