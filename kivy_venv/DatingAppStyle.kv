@@ -1,0 +1,94 @@
+WindowManager:
+    Initialize: 
+    LoginScreen: 
+    LoggedInScreen:
+
+<Initialize>:
+    name: "Initialize"
+    on_enter:
+        root.manager.current = "LoginWindow"
+        root.manager.transition.direction = "right"
+    canvas:
+        Color:
+            rgba: 240, 255, 0, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    FitImage:
+        id: CompLogo
+        source: "logoWithText.png"
+        allow_stretch: True
+        keep_ratio: True
+        size_hint_y: None
+        size_hint_x: None
+        pos_hint: {"center_x": 0.55, "center_y": 0.5}
+        height: 200
+        width: 250
+
+<LoginScreen>:
+    name: "LoginWindow"
+
+    FitImage:
+        id: msLogo
+        source: "MSBIG.png"
+        size_hint_y: .5
+        pos_hint: {"top": 1}
+        radius: [50, 50, 0, 0, ]
+
+    MDRoundFlatButton:
+        text: "Login with Google"
+        font_size: 12
+        pos_hint: {'center_x': 0.5, 'center_y': 0.2}
+        on_release: 
+            root.loginWithGoogle()
+            
+    MDRoundFlatButton:
+        text: "Forgot Password?"
+        font_size: 12
+        pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+        on_press: app.forgotPassword()
+                
+
+<MainPage@MDSwiperItem>
+
+<LoggedInScreen>
+    name: "LoggedInWindow"
+
+    MDToolbar:
+        id: toolbar
+        title: "Morning Star"
+        elevation: 10
+        pos_hint: {"top": 1}
+    
+    ScrollView:
+        size_hint_y: None
+        height: root.height - toolbar.height
+        
+        MDCard:
+            size: 400, 600
+            size_hint: None, None
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            orientation: 'vertical'
+            spacing: 25
+
+
+            MDLabel:
+                id: welcomeLabel
+                text: " "
+                size_hint_y: None
+                halign: 'center'
+                font_size: 40
+
+            MDRoundFlatButton:
+                text: "Back"
+                font_size: 12
+                pos_hint: {'center_x': 0.5}
+                on_release: 
+                    app.root.current = "LoginWindow"
+                    root.manager.transition.direction = "right"
+                    root.returnLogin()
+
+            Widget:
+                size_hint_y: None
+                height: 300

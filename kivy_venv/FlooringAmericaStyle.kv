@@ -1,0 +1,256 @@
+WindowManager:
+    canvas:
+        Color:
+            rgba: 0.149, 0.239, 0.36, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    Initialize: 
+    LoginScreen: 
+    LoggedInScreen:
+<Initialize>:
+    name: "Initialize"
+    on_enter:
+        root.manager.current = "LoginWindow"
+        root.manager.transition.direction = "right"
+    canvas:
+        Color:
+            rgba: 0, 0, 255, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    FitImage:
+        id: CompLogo
+        source: "floringAmericaLogo2.png"
+        allow_stretch: True
+        keep_ratio: True
+        size_hint_y: None
+        size_hint_x: None
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+        height: 127
+        width: 259
+
+<LoginScreen>:
+    name: "LoginWindow"
+    
+    FitImage:
+        id: msLogo
+        source: "floringAmericaLogo2.png"
+        size_hint_y: .5
+        allow_stretch: True
+        keep_ratio: True
+        size_hint_y: None
+        size_hint_x: None
+        pos_hint: {"center_x": 0.5, "center_y": 0.65}
+        height: 127
+        width: 259
+
+    MDTextFieldRound:
+        id: user
+        hint_text: "Email"
+        icon_right: "account"
+        size_hint_x: None
+        width: 200
+        font_size: 18
+        pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+
+    MDTextFieldRound:
+        id: password
+        hint_text: "Password"
+        icon_right: "eye-off"
+        size_hint_x: None
+        width: 200
+        font_size: 18
+        pos_hint: {'center_x': 0.5, 'center_y': 0.3}
+        password: True
+
+    MDFillRoundFlatButton:
+        text: "Login"
+        font_size: 12
+        pos_hint: {'center_x': 0.5, 'center_y': 0.2}
+        on_release: 
+            root.manager.transition.direction = "left"
+            root.Login()
+            
+    MDFillRoundFlatButton:
+        text: "Forgot Password?"
+        font_size: 12
+        pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+        on_press: app.forgotPassword()
+                
+    MDLabel:
+        id: wrongPassword
+        text: " "
+        font_size: 12
+        pos_hint: {'center_x': 0.5, 'center_y': 0.01}
+        halign: 'center'
+        height: self.texture_size[1]
+        size_hint_y: None
+        
+<MainPage@MDSwiperItem>
+
+<LoggedInScreen>
+    name: "LoggedInWindow"
+    
+    MDBottomNavigation:
+
+        MDBottomNavigationItem:
+            name: 'screen 1'
+            text: 'Home'
+            icon: 'home'
+            MDToolbar:
+                id: toolbar
+                title: "Home"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["bell", lambda x: grid.set_button_text()], ["message-text", lambda x: grid.set_button_text()]]
+            
+            ScrollView:
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                
+                MDCard:
+                    size: root.width, root.height
+                    elevation: 10
+                    size_hint: None, None
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    orientation: 'vertical'
+                    spacing: 25
+                    canvas:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+
+                    MDLabel:
+                        id: welcomeLabel
+                        text: " "
+                        size_hint_y: None
+                        halign: 'center'
+                        font_size: 40
+
+                    Widget:
+                        size_hint_y: None
+                        height: 280
+
+        MDBottomNavigationItem:
+            name: 'screen 2'
+            text: 'Jobs'
+            icon: 'format-list-bulleted'
+            MDToolbar:
+                id: toolbar
+                title: "Jobs"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["magnify", lambda x: grid.set_button_text()]]
+
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)    
+                JobsList:
+                    canvas.before:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+        MDBottomNavigationItem:
+            name: 'screen 3'
+            text: 'Calendar'
+            icon: 'calendar-month'
+            canvas.before:
+                Color:
+                    rgba: .5,.6,.7,1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            orientation:'vertical'
+            BoxLayout:
+                size_hint:1,.1
+                
+            BoxLayout:
+                BoxLayout:
+                    orientation: 'vertical'
+                    Days:
+                    Dates:
+                        id: grid
+
+            MDToolbar:
+                id: toolbarCalendar
+                title: ""
+                anchor_title: "center"
+                elevation: 10
+                pos_hint: {"top": 1}
+
+                MDFloatingActionButton:
+                    icon: "arrow-left"
+                    elevation: 0
+                    on_release:
+                        grid.previousMonth()
+                        root.updateCalendar()
+
+                MDFloatingActionButton:
+                    icon: "arrow-right"
+                    elevation: 0
+                    on_release:
+                        grid.nextMonth()
+                        root.updateCalendar()
+
+                
+        MDBottomNavigationItem:
+            name: 'screen 4'
+            text: 'PROFILE'
+            icon: 'account'
+            MDToolbar:
+                id: toolbar
+                title: "Profile"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["logout", lambda x: root.Logout(), "Logout"]]
+                
+            ScrollView:
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                
+                MDCard:
+                    size: root.width, root.height
+                    elevation: 10
+                    size_hint: None, None
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    orientation: 'vertical'
+                    spacing: 25
+
+
+                    MDLabel:
+                        id: welcomLabel
+                        text: " "
+                        size_hint_y: None
+                        halign: 'center'
+                        font_size: 40
+
+                    Widget:
+                        size_hint_y: None
+                        height: 280
+

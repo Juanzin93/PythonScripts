@@ -1,0 +1,100 @@
+WindowManager:
+    LoginScreen: 
+    LoggedInScreen:
+    
+<LoginScreen>:
+    name: "LoginWindow"
+
+    FitImage:
+        id: msLogo
+        source: "MSBIG.png"
+        size_hint_y: .5
+        pos_hint: {"top": 1}
+        radius: [50, 50, 0, 0, ]
+
+    MDTextFieldRound:
+        id: user
+        hint_text: "Username"
+        icon_right: "account"
+        size_hint_x: None
+        width: 200
+        font_size: 18
+        pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+
+    MDTextFieldRound:
+        id: password
+        hint_text: "Password"
+        icon_right: "eye-off"
+        size_hint_x: None
+        width: 200
+        font_size: 18
+        pos_hint: {'center_x': 0.5, 'center_y': 0.3}
+        password: True
+
+    MDRoundFlatButton:
+        text: "LOGIN"
+        font_size: 12
+        pos_hint: {'center_x': 0.5, 'center_y': 0.2}
+        on_release: 
+            root.manager.transition.direction = "left"
+            app.root.current = "LoggedInWindow" if user.text == app.getNameFromList() and password.text == app.getPasswordFromList() else "LoginWindow"
+            root.wrongPass() if user.text != app.getNameFromList() or password.text != app.getPasswordFromList() else root.rightPass()
+            
+    MDRoundFlatButton:
+        text: "Forgot Password?"
+        font_size: 12
+        pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+        on_press: app.forgotPassword()
+    
+    MDLabel:
+        id: wrongPassword
+        text: " "
+        font_size: 12
+        pos_hint: {'center_x': 0.5, 'center_y': 0.01}
+        halign: 'center'
+        height: self.texture_size[1]
+        size_hint_y: None
+                
+
+<MainPage@MDSwiperItem>
+
+<LoggedInScreen>
+    name: "LoggedInWindow"
+
+    MDToolbar:
+        id: toolbar
+        title: "Morning Star"
+        elevation: 10
+        pos_hint: {"top": 1}
+    
+    ScrollView:
+        size_hint_y: None
+        height: root.height - toolbar.height
+        
+        MDCard:
+            size: 400, 600
+            size_hint: None, None
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            orientation: 'vertical'
+            spacing: 25
+
+
+            MDLabel:
+                id: welcomeLabel
+                text: " "
+                size_hint_y: None
+                halign: 'center'
+                font_size: 40
+
+            MDRoundFlatButton:
+                text: "Back"
+                font_size: 12
+                pos_hint: {'center_x': 0.5}
+                on_release: 
+                    app.root.current = "LoginWindow"
+                    root.manager.transition.direction = "right"
+                    root.returnLogin()
+
+            Widget:
+                size_hint_y: None
+                height: 300
