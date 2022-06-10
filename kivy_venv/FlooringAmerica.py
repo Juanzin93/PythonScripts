@@ -6,6 +6,7 @@ from kivy.properties import ObjectProperty
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.list.list import MDList
+from kivymd.uix.card import MDCard
 from kivymd.uix.pickers import MDDatePicker
 from kivy.core.window import Window
 from kivymd.uix.behaviors.backgroundcolor_behavior import BackgroundColorBehavior
@@ -72,7 +73,14 @@ class LoginScreen(Screen):
             if str(User[3]) == str(self.manager.get_screen('LoginWindow').ids.user.text) and str(self.manager.get_screen('LoginWindow').ids.password.text) == str(User[4]):
                 self.manager.get_screen('LoginWindow').ids.wrongPassword.text = " "
                 self.manager.current = 'LoggedInWindow'
-                self.manager.get_screen('LoggedInWindow').ids.welcomeLabel.text = f"Welcome {User[1]}"
+                welcome = self.manager.get_screen('LoggedInWindow').ids.welcomeLabel
+                welcome.text = f"Welcome {User[1]}"
+                welcome.theme_text_color = "Custom"
+                welcome.text_color = (1,1,1,1)
+                welcomeUser = self.manager.get_screen('LoggedInWindow').ids.nameLabel
+                welcomeUser.text = f"{User[1]} {User[2]}"
+                welcomeUser.theme_text_color = "Custom"
+                welcomeUser.text_color = (1,1,1,1)
                 year = int(time.strftime("%Y"))
                 month = time.strftime("%B")
                 self.manager.get_screen('LoggedInWindow').ids.toolbarCalendar.title = f"{month} {year}"
@@ -80,7 +88,11 @@ class LoginScreen(Screen):
                 return
             else:
                 print("Login Failed")
-                self.manager.get_screen('LoginWindow').ids.wrongPassword.text = "Wrong Password"
+                wrongPass = self.manager.get_screen('LoginWindow').ids.wrongPassword
+                wrongPass.theme_text_color = "Custom"
+                wrongPass.text_color = (1,1,1,1)
+                wrongPass.text = "Wrong Password"
+
 
     def build(self):
         initialize_google(self.after_login, self.error_listener)
@@ -99,6 +111,57 @@ class LoggedInScreen(Screen):
         monthstr = datetime.date(1900, month, 1).strftime('%B')
         self.manager.get_screen('LoggedInWindow').ids.toolbarCalendar.title = f"{monthstr} {year}"
         
+    def goToNotifications(self):
+        self.manager.current = 'NotificationsWindow'
+        self.manager.transition.direction = "left"
+
+
+class MessagesScreen(Screen):
+    pass
+    
+class NotificationScreen(Screen):
+    
+    def goToLoggedInScreen(self):
+        self.manager.current = 'LoggedInWindow'
+        self.manager.transition.direction = "right"
+
+    pass
+
+class CoverBoxLayout(MDBoxLayout):
+
+    def callback(self):  
+        print("change cover pop up")      
+        #self.ids['profileImage'].source = '1.jpg'
+    # or you could switch sources each click for instance
+    pass
+
+    def coverCallback(self):  
+        print("change cover pop up")      
+        #self.ids['profileImage'].source = '1.jpg'
+    # or you could switch sources each click for instance
+    pass
+
+    def profileCallback(self):  
+        print("change photo pop up")      
+        #self.ids['profileImage'].source = '1.jpg'
+    # or you could switch sources each click for instance
+    pass
+
+class ProfileBoxLayout(MDBoxLayout):
+
+    def callback(self):  
+        print("change photo pop up")      
+        #self.ids['profileImage'].source = '1.jpg'
+    # or you could switch sources each click for instance
+    pass
+
+class ButtonWidget(Widget):
+
+    def profilePhotocallback(self):  
+        print("change photo pop up")      
+        #self.ids['profileImage'].source = '1.jpg'
+    # or you could switch sources each click for instance
+    pass
 
 class JobsList(MDList):
     def __init__(self,**kwargs):
@@ -116,6 +179,22 @@ class AppSetting(MDList):
         self.add_widget(haduki)
         for i in range(10):
             lists = OneLineListItem(text=f"Settings {i+1}")
+            self.add_widget(lists)
+
+class Notifications(MDList):
+    def __init__(self,**kwargs):
+        super(Notifications,self).__init__(**kwargs)
+        for i in range(5):
+            lists = OneLineListItem(text=f"Notification {i+1}")
+            self.add_widget(lists)
+
+class Messages(MDList):
+    def __init__(self,**kwargs):
+        super(Messages,self).__init__(**kwargs)
+        for i in range(10):
+            lists = OneLineListItem(text=f"Message {i+1}")
+            lists.theme_text_color = "Custom"
+            lists.text_color = (1,1,1,1)
             self.add_widget(lists)
 
 class Initialize(Screen):
@@ -292,6 +371,8 @@ class MobileApp(MDApp):
 
     def forgotPassword(self):
         pass
+
+    
 
 if __name__ == '__main__':
     MobileApp().run()
