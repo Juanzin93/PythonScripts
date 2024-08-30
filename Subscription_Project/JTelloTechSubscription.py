@@ -218,7 +218,7 @@ AuthenticationWindow.resizable(False,False)
 
 HEADER = 64
 PORT = 9316
-SERVER = "test.bestserverglobal.com"
+SERVER = "68.205.37.3"
 ADDR = (SERVER, PORT)
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!Disconnect"

@@ -35,7 +35,7 @@ class App(customtkinter.CTk):
 
         self.title("Property Management Tool - Beta")
         self.geometry(f"{App.WIDTH}x{App.HEIGHT}")
-        self.iconbitmap('property_manager_tool2.ico')
+        self.iconbitmap('property_management_tool/property_manager_tool2.ico')
         self.minsize(App.WIDTH, App.HEIGHT)
         self.maxsize(App.WIDTH, App.HEIGHT)
 
@@ -70,7 +70,7 @@ class App(customtkinter.CTk):
         image = Image.open(PATH + "\PMS-Logo.jpg").resize((int(self.WIDTH/2), int(self.HEIGHT/2)))
         self.bg_image = ImageTk.PhotoImage(image)
 
-        self.image_label = customtkinter.CTkLabel(master=self.main_frame, image=self.bg_image, bg="#292929")
+        self.image_label = customtkinter.CTkLabel(master=self.main_frame, image=self.bg_image, bg_color="#292929")
         self.image_label.grid(column=1, row=0, sticky="nswe", padx=10, pady=20)
 
         # ============ main_frame ============
@@ -124,7 +124,7 @@ class App(customtkinter.CTk):
         self.clientList = Listbox(self.logged_frame, yscrollcommand=self.clientListScrollBar.set, bg="#3d3d3d", fg="silver", border=0)
         self.clientList.place(relwidth=0.247, relheight=0.64, x=510,y=110)
         #self.clientList.grid(row=2, column=1, columnspan=2, pady=20, padx=65, sticky="e")
-        self.clientListScrollBar.config(command=self.clientList.yview)
+        self.clientListScrollBar.configure(command=self.clientList.yview)
         self.clientListScrollBar.pack(side=RIGHT, fill=Y)
 
         self.clientTable = [
@@ -158,11 +158,11 @@ class App(customtkinter.CTk):
             self.clientList.insert(END, client)
 
         self.clientList.bind("<Double-Button-1>", self.load_selected_client)
-        self.clientName_Label = customtkinter.CTkLabel(master=self.logged_frame, text="Client Name:", text_font=("Arial", "12", "bold"))
+        self.clientName_Label = customtkinter.CTkLabel(master=self.logged_frame, text="Client Name:", font=("Arial",12))
         self.clientName_Label.grid(row=2, column=0, pady=20, padx=5, sticky="w")
 
         
-        self.clientName_result_Label = customtkinter.CTkLabel(master=self.logged_frame, text="", text_font=("Arial", "12", "bold"))
+        self.clientName_result_Label = customtkinter.CTkLabel(master=self.logged_frame, text="", font=("Arial",12))
         self.clientName_result_Label.grid(row=2, column=0, pady=20, padx=120, sticky="w")
 
         self.clientSearch_entry = customtkinter.CTkEntry(master=self.logged_frame,
@@ -180,12 +180,12 @@ class App(customtkinter.CTk):
         if customtkinter.get_appearance_mode() == "Dark":
             self.darkmode_switch.select()
         else:
-            self.clientList.config(bg="white")
+            self.clientList.configure(bg="white")
 
-        self.clock_label = customtkinter.CTkLabel(master=self.logged_frame, text_font=("Helvetica", 15))
+        self.clock_label = customtkinter.CTkLabel(master=self.logged_frame, font=("Helvetica", 15))
         self.clock_label.grid(column=2, row=0, sticky="ne", padx=10, pady=15)
 
-        self.timeInAndOut_label = customtkinter.CTkLabel(master=self.logged_frame, text_font=("Helvetica", 15), text="")
+        self.timeInAndOut_label = customtkinter.CTkLabel(master=self.logged_frame, font=("Helvetica", 15), text="")
         self.timeInAndOut_label.place(x=610,y=55)
         
         #TKbuttons
@@ -225,15 +225,15 @@ class App(customtkinter.CTk):
         if self.darkmode_switch.get() == 1:
             customtkinter.set_appearance_mode("dark")
             try:
-                self.image_label.config(bg="#292929")
+                self.image_label.configure(bg="#292929")
             except:
-                self.clientList.config(bg="#3d3d3d")
+                self.clientList.configure(bg="#3d3d3d")
         else:
             customtkinter.set_appearance_mode("light")
             try:
-                self.image_label.config(bg="#e3e4e5")
+                self.image_label.configure(bg="#e3e4e5")
             except:
-                self.clientList.config(bg="white")
+                self.clientList.configure(bg="white")
 
     def Start(self):
         self.mainloop()
@@ -243,7 +243,7 @@ class App(customtkinter.CTk):
         minute = time.strftime("%M")
         second = time.strftime("%S")
 
-        self.clock_label.config(text=f"{hour}:{minute}:{second}")
+        self.clock_label.configure(text=f"{hour}:{minute}:{second}")
         self.clock_label.after(1000, self.Clock)
 
     def propertyUpdate(self, data):  
@@ -338,7 +338,7 @@ class App(customtkinter.CTk):
         except:
             client = loadedClient
             
-        self.clientName_result_Label.config(text=str(client))
+        self.clientName_result_Label.configure(text=str(client))
 
 
 #buttons
@@ -346,13 +346,13 @@ class App(customtkinter.CTk):
     def ClockIn(self):
         self.clockIn_button.grid_forget()
         self.clockOut_button.grid(column=1, row=0, pady=15, sticky="ne")
-        self.timeInAndOut_label.config(text=time.strftime('%H:%M:%S'), bg="green")
+        self.timeInAndOut_label.configure(text=time.strftime('%H:%M:%S'), bg_color="green")
 
 
     def ClockOut(self):
         self.clockOut_button.grid_forget()
         self.clockIn_button.grid(column=1, row=0, pady=15, sticky="ne")
-        self.timeInAndOut_label.config(text=time.strftime('%H:%M:%S'), bg="red")
+        self.timeInAndOut_label.configure(text=time.strftime('%H:%M:%S'), bg_color="red")
 
 
     def Logout(self):
@@ -375,7 +375,7 @@ class App(customtkinter.CTk):
         self.PropertyListWindow = customtkinter.CTkToplevel(self)
         self.PropertyListWindow.title("Properties")
         self.PropertyListWindow.geometry(f"{App.WIDTH+400}x{App.HEIGHT}")
-        self.PropertyListWindow.iconbitmap('property_manager_tool2.ico')
+        self.PropertyListWindow.iconbitmap('property_management_tool/property_manager_tool2.ico')
         self.PropertyListWindow.minsize(App.WIDTH+400, App.HEIGHT)
         #self.PropertyListWindow.maxsize(App.WIDTH+300, App.HEIGHT)
         
@@ -543,122 +543,122 @@ class App(customtkinter.CTk):
         ################################################################################
         self.fetchedModelCode = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[0]
         print(self.fetchedModelCode.text)
-        self.fetchedModelCode_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedModelCode.text, text_font=("Arial", 15))
+        self.fetchedModelCode_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedModelCode.text, font=("Arial", 15))
         self.fetchedModelCode_label.grid(row=0, column=0, sticky="nswe", padx=10, pady=10)
         
         self.ffetchedModelCode_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-3']"))[0]
         print(self.ffetchedModelCode_result.text)
-        self.ffetchedModelCode_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.ffetchedModelCode_result.text, text_font=("Arial", 15))
+        self.ffetchedModelCode_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.ffetchedModelCode_result.text, font=("Arial", 15))
         self.ffetchedModelCode_result_label.grid(row=0, column=1, sticky="nswe", padx=10, pady=10)
         
         self.fetchedActualYearBuilt = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[1]
         print(self.fetchedActualYearBuilt.text)
-        self.fetchedActualYearBuilt_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedActualYearBuilt.text, text_font=("Arial", 15))
+        self.fetchedActualYearBuilt_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedActualYearBuilt.text, font=("Arial", 15))
         self.fetchedActualYearBuilt_label.grid(row=1, column=0, sticky="nswe", padx=10, pady=10)
         
         self.fetchedActualYearBuilt_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-1']"))[0]
         print(self.fetchedActualYearBuilt_result.text)
-        self.fetchedActualYearBuilt_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedActualYearBuilt_result.text, text_font=("Arial", 15))
+        self.fetchedActualYearBuilt_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedActualYearBuilt_result.text, font=("Arial", 15))
         self.fetchedActualYearBuilt_result_label.grid(row=1, column=1, sticky="nswe", padx=10, pady=10)
         
         self.fetchedGrossArea = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[2]
         print(self.fetchedGrossArea.text)
-        self.fetchedGrossArea_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedGrossArea.text, text_font=("Arial", 15))
+        self.fetchedGrossArea_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedGrossArea.text, font=("Arial", 15))
         self.fetchedGrossArea_label.grid(row=2, column=0, sticky="nswe", padx=10, pady=10)
         
         self.fetchedGrossArea_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[3]
         print(self.fetchedGrossArea_result.text)
-        self.fetchedGrossArea_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedGrossArea_result.text, text_font=("Arial", 15))
+        self.fetchedGrossArea_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedGrossArea_result.text, font=("Arial", 15))
         self.fetchedGrossArea_result_label.grid(row=2, column=1, sticky="nswe", padx=10, pady=10)
         
         self.fetchedTypeCode = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[4]
         print(self.fetchedTypeCode.text)
-        self.fetchedTypeCode_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedTypeCode.text, text_font=("Arial", 15))
+        self.fetchedTypeCode_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedTypeCode.text, font=("Arial", 15))
         self.fetchedTypeCode_label.grid(row=3, column=0, sticky="nswe", padx=10, pady=10)
         
         self.fetchedTypeCode_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-3']"))[1]
         print(self.fetchedTypeCode_result.text)
-        self.fetchedTypeCode_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedTypeCode_result.text, text_font=("Arial", 15))
+        self.fetchedTypeCode_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedTypeCode_result.text, font=("Arial", 15))
         self.fetchedTypeCode_result_label.grid(row=3, column=1, sticky="nswe", padx=10, pady=10)
         
         self.fetchedBeds = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[5]
         print(self.fetchedBeds.text)
-        self.fetchedBeds_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBeds.text, text_font=("Arial", 15))
+        self.fetchedBeds_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBeds.text, font=("Arial", 15))
         self.fetchedBeds_label.grid(row=4, column=0, sticky="nswe", padx=10, pady=10)
         
         self.fetchedBeds_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-1']"))[1]
         print(self.fetchedBeds_result.text)
-        self.fetchedBeds_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBeds_result.text, text_font=("Arial", 15))
+        self.fetchedBeds_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBeds_result.text, font=("Arial", 15))
         self.fetchedBeds_result_label.grid(row=4, column=1, sticky="nswe", padx=10, pady=10)
 
         self.fetchedLivingArea = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[6]
         print(self.fetchedLivingArea.text)
-        self.fetchedLivingArea_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedLivingArea.text, text_font=("Arial", 15))
+        self.fetchedLivingArea_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedLivingArea.text, font=("Arial", 15))
         self.fetchedLivingArea_label.grid(row=5, column=0, sticky="nswe", padx=10, pady=10)
 
         self.fetchedLivingArea_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[7]
         print(self.fetchedLivingArea_result.text)
-        self.fetchedLivingArea_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedLivingArea_result.text, text_font=("Arial", 15))
+        self.fetchedLivingArea_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedLivingArea_result.text, font=("Arial", 15))
         self.fetchedLivingArea_result_label.grid(row=5, column=1, sticky="nswe", padx=10, pady=10)
         
         self.fetchedBuildingValue = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[8]
         print(self.fetchedBuildingValue.text)
-        self.fetchedBuildingValue_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBuildingValue.text, text_font=("Arial", 15))
+        self.fetchedBuildingValue_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBuildingValue.text, font=("Arial", 15))
         self.fetchedBuildingValue_label.grid(row=6, column=0, sticky="nswe", padx=10, pady=10)
         
         self.fetchedBuildingValue_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-3']"))[2]
         print(self.fetchedBuildingValue_result.text)
-        self.fetchedBuildingValue_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBuildingValue_result.text, text_font=("Arial", 15))
+        self.fetchedBuildingValue_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBuildingValue_result.text, font=("Arial", 15))
         self.fetchedBuildingValue_result_label.grid(row=6, column=1, sticky="nswe", padx=10, pady=10)
         
         self.fetchedBaths = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[9]
         print(self.fetchedBaths.text)
-        self.fetchedBaths_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBaths.text, text_font=("Arial", 15))
+        self.fetchedBaths_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBaths.text, font=("Arial", 15))
         self.fetchedBaths_label.grid(row=7, column=0, sticky="nswe", padx=10, pady=10)
         
         self.fetchedBaths_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-1']"))[2]
         print(self.fetchedBaths_result.text)
-        self.fetchedBaths_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBaths_result.text, text_font=("Arial", 15))
+        self.fetchedBaths_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedBaths_result.text, font=("Arial", 15))
         self.fetchedBaths_result_label.grid(row=7, column=1, sticky="nswe", padx=10, pady=10)
 
         self.fetchedExteriorWall = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[10]
         print(self.fetchedExteriorWall.text)
-        self.fetchedExteriorWall_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedExteriorWall.text, text_font=("Arial", 15))
+        self.fetchedExteriorWall_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedExteriorWall.text, font=("Arial", 15))
         self.fetchedExteriorWall_label.grid(row=8, column=0, sticky="nswe", padx=10, pady=10)
         
         self.fetchedExteriorWall_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[11]
         print(self.fetchedExteriorWall_result.text)
-        self.fetchedExteriorWall_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedExteriorWall_result.text, text_font=("Arial", 15))
+        self.fetchedExteriorWall_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedExteriorWall_result.text, font=("Arial", 15))
         self.fetchedExteriorWall_result_label.grid(row=8, column=1, sticky="nswe", padx=10, pady=10)
         
         self.fetchedEstimatedNewCost = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[12]
         print(self.fetchedEstimatedNewCost.text)
-        self.fetchedEstimatedNewCost_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedEstimatedNewCost.text, text_font=("Arial", 15))
+        self.fetchedEstimatedNewCost_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedEstimatedNewCost.text, font=("Arial", 15))
         self.fetchedEstimatedNewCost_label.grid(row=9, column=0, sticky="nswe", padx=10, pady=10)
         
         self.fetchedEstimatedNewCost_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-3']"))[3]
         print(self.fetchedEstimatedNewCost_result.text)
-        self.fetchedEstimatedNewCost_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedEstimatedNewCost_result.text, text_font=("Arial", 15))
+        self.fetchedEstimatedNewCost_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedEstimatedNewCost_result.text, font=("Arial", 15))
         self.fetchedEstimatedNewCost_result_label.grid(row=9, column=1, sticky="nswe", padx=10, pady=10)
         
         self.fetchedFloors = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[13]
         print(self.fetchedFloors.text)
-        self.fetchedFloors_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedFloors.text, text_font=("Arial", 15))
+        self.fetchedFloors_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedFloors.text, font=("Arial", 15))
         self.fetchedFloors_label.grid(row=10, column=0, sticky="nswe", padx=10, pady=10)
         
         self.fetchedFloors_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-1']"))[3]
         print(self.fetchedFloors_result.text)
-        self.fetchedFloors_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedFloors_result.text, text_font=("Arial", 15))
+        self.fetchedFloors_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedFloors_result.text, font=("Arial", 15))
         self.fetchedFloors_result_label.grid(row=10, column=1, sticky="nswe", padx=10, pady=10)
         
         self.fetchedInteriorWall = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[14]
         print(self.fetchedInteriorWall.text)
-        self.fetchedInteriorWall_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedInteriorWall.text, text_font=("Arial", 15))
+        self.fetchedInteriorWall_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedInteriorWall.text, font=("Arial", 15))
         self.fetchedInteriorWall_label.grid(row=11, column=0, sticky="nswe", padx=10, pady=10)
         
         self.fetchedInteriorWall_result = webdriveStartup.find_elements_by_xpath(("//div[@class='col-md-2']"))[15]
         print(self.fetchedInteriorWall_result.text)
-        self.fetchedInteriorWall_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedInteriorWall_result.text, text_font=("Arial", 15))
+        self.fetchedInteriorWall_result_label = customtkinter.CTkLabel(master=self.PropertySelected_frame, text=self.fetchedInteriorWall_result.text, font=("Arial", 15))
         self.fetchedInteriorWall_result_label.grid(row=11, column=1, sticky="nswe", padx=10, pady=10)
 
         webdriveStartup.close()

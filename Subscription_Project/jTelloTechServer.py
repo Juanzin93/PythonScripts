@@ -1,5 +1,6 @@
 import socket
 import threading
+import mysql.connector as mysql
 
 HEADER = 64
 PORT = 9316
@@ -23,6 +24,40 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 databaseData = [DBHOST,DBUSER,DBPASSWORD,DBDATABASE,DBPORT,SMTPSSL,SMTPPORT,SMTPEMAIL,SMTPPASSWORD]
 DbClientDatabase = ""
+
+
+class fetchInfoFromDatabase():
+    def getLoginCredentials():
+        try: 
+            connect = mysql.connect(
+                    host = DBHOST,
+                    user = DBUSER,
+                    passwd = DBPASSWORD,
+                    database = DBDATABASE,
+                    port = DBPORT,
+                    auth_plugin='mysql_native_password'
+                    )
+        except Exception as e:
+            print(e)
+            return "unable to access database"
+
+        cursor = connect.cursor()
+
+        cursor.execute('''CREATE TABLE IF NOT EXISTS Users(
+                        UserID integer PRIMARY KEY AUTO_INCREMENT,
+                        FirstName TEXT,
+                        LastName TEXT,
+                        Email TEXT,
+                        Password TEXT,
+                        PhoneNumber TEXT,
+                        Address TEXT,
+                        City TEXT,
+                        State TEXT,
+                        ZipCode TEXT,
+                        Category TEXT)''')
+        
+        cursor.execute("SELECT * from Users")
+        return cursor.fetchall()
 
 def handleClient(conn, addr):
     global DbClientDatabase

@@ -1,0 +1,37 @@
+<LoginScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(10)
+        padding: dp(30)
+        MDTextField:
+            id: username
+            hint_text: 'Username'
+            icon_right: 'account'
+            required: True
+        MDTextField:
+            id: password
+            hint_text: 'Password'
+            icon_right: 'lock'
+            password: True
+            required: True
+        MDLabel:
+            id: error
+            halign: 'center'
+            color: (1, 0, 0, 1)
+        MDRaisedButton:
+            text: 'Login'
+            on_press: asyncio.create_task(app.root.get_screen('login').login())
+            on_release: root.manager.transition.direction = 'left'; root.manager.transition.duration = 0.3; root.manager.current = 'home'
+
+<HomeScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(10)
+        padding: dp(30)
+        MDLabel:
+            text: 'Welcome!'
+            font_style: 'H5'
+            halign: 'center'
+        MDRaisedButton:
+            text: 'Logout'
+            on_release: root.manager.transition.direction = 'right'; root.manager.transition.duration = 0.3; root.manager.current = 'login'

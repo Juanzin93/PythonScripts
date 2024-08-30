@@ -12,7 +12,7 @@ from PIL import ImageGrab
 import pyautogui
 from pyautogui import press
 from ctypes import c_uint64, windll, Structure, c_long, byref
-from process_interface import ProcessInterface
+#from process_interface import ProcessInterface
 
 #def main():
 #process = ProcessInterface()

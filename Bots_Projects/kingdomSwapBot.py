@@ -6,6 +6,7 @@ from tkinter import *
 import time
 #import OpenCV
 import cv2
+import mouse
 from PIL import ImageGrab
 import pyautogui
 from pyautogui import press
@@ -272,6 +273,8 @@ def matching_algo(r, g, b, r_query, g_query, b_query):
     else:
         return False
 
+mouse.on_right_click(lambda: print("Right Button clicked."))
+
 def fishing():    
     water_x1 = (water_coordinates[0][0])
     water_y1 = (water_coordinates[0][1])
@@ -284,13 +287,13 @@ def fishing():
     image = ImageGrab.grab()
     fishingRod = find_rgb(155, 106, 64)
     pyautogui.moveTo(fishingRod)
-    pyautogui.click(button='right')
+    mouse.click('right')
     #water = find_rgb(17, 38, 167)
     water1 = water_x1 + middleOfWaterBoxX, water_y1 + middleOfWaterBoxY
     waterPixel = image.getpixel(water1)
-    print(waterPixel)
+    print("water pixel:",waterPixel)
 
-    water = find_rgb(15, 37, 161)
+    water = find_rgb(4, 5, 164)
 
     print(waterPixel)
     clearWater = find_rgb(34, 136, 169)
@@ -354,16 +357,18 @@ def autoRune():
             StopBot()
 
 def exuraHeal():
-    image = ImageGrab.grab()
-    health = image.getpixel((1097, 687))
-    healthString = str(health)
-    print(health)
-    pos = find_rgb(245, 80, 31)
-    if "(245, 80, 31)" == healthString or "(237, 77, 29)" == healthString:
-        #pyautogui.press('f2')
-        print("clicked")
-        pyautogui.moveTo(pos)
-        pyautogui.click(button='left')
+    pyautogui.click(x=1756, y=654, button='right',clicks=2, interval=1)
+    pyautogui.press('f1')
+    #image = ImageGrab.grab()
+    #health = image.getpixel((1097, 687))
+    #healthString = str(health)
+    #print(health)
+    #pos = find_rgb(245, 80, 31)
+    #if "(245, 80, 31)" == healthString or "(237, 77, 29)" == healthString:
+    #    #pyautogui.press('f2')
+    #    print("clicked")
+    #    pyautogui.moveTo(pos)
+    #    pyautogui.click(button='left')
 
 
 def StopBot():

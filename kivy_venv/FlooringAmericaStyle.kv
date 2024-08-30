@@ -1,14 +1,26 @@
+#:import MDBoxLayout kivymd.uix.boxlayout.MDBoxLayout
+#:import MDBottomNavigationItem kivymd.uix.bottomnavigation.MDBottomNavigationItem
+#:import MDLabel kivymd.uix.label.MDLabel
+#:import images_path kivymd.images_path
+
 WindowManager:
+    id: root_widget
     canvas:
         Color:
             rgba: 0.149, 0.239, 0.36, 1
         Rectangle:
             size: self.size
             pos: self.pos
-    Initialize: 
+     
+    Initialize:
     LoginScreen: 
-    LoggedInScreen:
+    SearchScreen:
     NotificationScreen:
+    signUpScreen:
+    userCreated:
+    passwordRecovery:
+    verifyToken:
+    changePasswordScreen:
 <Initialize>:
     name: "Initialize"
     on_enter:
@@ -32,63 +44,468 @@ WindowManager:
         height: 127
         width: 259
 
+<Tab>:
+    orientation: 'vertical'
+
+<PostsTab>:
+    id: posts_tab
+    
+<ReviewsTab>:
+    id: reviews_tab
+
+<StarRatings>:
+    spacing: '8dp'
+    size_hint_y: None
+    height: self.minimum_height
+
+    MDIcon:
+        icon: 'star'
+        theme_text_color: 'Custom'
+        text_color: root.color
+        size_hint_x: None
+        width: self.texture_size[0]
+
+    MDLabel:
+        text: str(root.rating)
+        theme_text_color: 'Custom'
+        text_color: root.color
+
+
+
+
+<userCreated>
+    name: "userCreated"
+
+    GridLayout:
+        cols: 1
+        rows: 2
+        spacing: 10
+        size_hint_x: None            
+        size_hint_y: None            
+        height: self.minimum_height
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+        
+        MDLabel:
+            id: title
+            text: "User has been created."
+            font_style: "H4"
+            halign: "center"
+            size_hint_x: None
+            size_hint_y: None
+
+        MDLabel:
+            id: emailText
+            text: "Please verify your account."
+            font_style: "H5"
+            halign: "center"
+            size_hint_x: None
+            size_hint_y: None
+
+        MDFillRoundFlatButton:
+            text: "Back"
+            font_size: 12
+            on_release: 
+                root.manager.transition.direction = "right"
+                root.backToLogin()
+
+<signUpScreen>
+    name: "SignUpWindow"
+
+    ScrollView:
+        id: signupScroll
+        do_scroll_x: False
+        do_scroll_y: True
+        height: root.height
+        width: root.width
+        halign: 'center'
+        size_hint_x: None
+        size_hint_y: None
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            
+        canvas.before:
+            Color:
+                rgba: 0.149, 0.239, 0.36, 1
+            Rectangle:
+                size: self.size
+                pos: self.pos
+
+        MDGridLayout:
+            cols: 1
+            spacing: 10
+            size_hint_x: None 
+            size_hint_y: None            
+            height: self.minimum_height
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            
+            FitImage:
+                id: signUpText
+                source: "floringAmericaLogo2.png"
+                allow_stretch: True
+                keep_ratio: True
+                size_hint_x: None
+                size_hint_y: None
+                height: 127
+                width: 259
+                padding_x: 100
+
+
+            MDTextFieldRound:
+                id: firstName
+                hint_text: "First Name"
+                icon_right: "account"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+            MDTextFieldRound:
+                id: lastName
+                hint_text: "Last Name"
+                icon_right: "eye-off"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 120
+
+            MDTextFieldRound:
+                id: email
+                hint_text: "Email"
+                icon_right: "eye-off"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 180
+
+            MDTextFieldRound:
+                id: password
+                hint_text: "Password"
+                icon_right: "eye-off"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                password: True
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 240
+
+            MDTextFieldRound:
+                id: confirmPassword
+                hint_text: "Confirm Password"
+                icon_right: "eye-off"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                password: True
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 300
+            
+            MDTextFieldRound:
+                id: phone
+                hint_text: "Phone Number"
+                icon_right: "eye-off"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 360
+            
+            MDTextFieldRound:
+                id: address
+                hint_text: "Address"
+                icon_right: "eye-off"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 420
+            
+            MDTextFieldRound:
+                id: city
+                hint_text: "City"
+                icon_right: "eye-off"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 480
+            
+            MDTextFieldRound:
+                id: state
+                hint_text: "State"
+                icon_right: "eye-off"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 540
+            
+            MDTextFieldRound:
+                id: zipcode
+                hint_text: "Zipcode"
+                icon_right: "eye-off"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 600
+            
+            MDTextFieldRound:
+                id: category
+                hint_text: "Pick Category"
+                icon_right: "eye-off"
+                size_hint_x: None
+                width: 200
+                font_size: 18
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 660
+            
+            MDFillRoundFlatButton:
+                text: "Submit"
+                font_size: 12
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 720
+                on_release: 
+                    root.manager.transition.direction = "left"
+                    root.create_user()
+                    
+            MDFillRoundFlatButton:
+                text: "Back"
+                font_size: 12
+                pos_hint: {'center_x': 0.5, 'center_y': None}
+                y: (self.parent.height - self.height) / 2 - 780
+                on_release: 
+                    root.manager.transition.direction = "right"
+                    root.back()
+
 <LoginScreen>:
     name: "LoginWindow"
-    
-    FitImage:
-        id: msLogo
-        source: "floringAmericaLogo2.png"
-        size_hint_y: .5
-        allow_stretch: True
-        keep_ratio: True
-        size_hint_y: None
-        size_hint_x: None
-        pos_hint: {"center_x": 0.5, "center_y": 0.65}
-        height: 127
-        width: 259
+    keep_me_logged_in: keep_me_logged_in_checkbox.active
 
-    MDTextFieldRound:
-        id: user
-        hint_text: "Email"
-        icon_right: "account"
+    MDGridLayout:
+        cols: 1
+        spacing: 10
         size_hint_x: None
-        width: 200
-        font_size: 18
-        pos_hint: {'center_x': 0.5, 'center_y': 0.4}
-
-    MDTextFieldRound:
-        id: password
-        hint_text: "Password"
-        icon_right: "eye-off"
-        size_hint_x: None
-        width: 200
-        font_size: 18
-        pos_hint: {'center_x': 0.5, 'center_y': 0.3}
-        password: True
-
-    MDFillRoundFlatButton:
-        text: "Login"
-        font_size: 12
-        pos_hint: {'center_x': 0.5, 'center_y': 0.2}
-        on_release: 
-            root.manager.transition.direction = "left"
-            root.Login()
-            
-    MDFillRoundFlatButton:
-        text: "Forgot Password?"
-        font_size: 12
-        pos_hint: {'center_x': 0.5, 'center_y': 0.1}
-        on_press: app.forgotPassword()
-                
-    MDLabel:
-        id: wrongPassword
-        text: " "
-        font_size: 20
-        pos_hint: {'center_x': 0.5, 'center_y': 0.02}
+        size_hint_y: None        
         halign: 'center'
-        height: self.texture_size[1]
-        size_hint_y: None
+        height: self.minimum_height
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    
+        FitImage:
+            id: msLogo
+            source: "MSBIG.png"
+            allow_stretch: True
+            keep_ratio: True
+            size_hint_y: None
+            size_hint_x: None
+            height: 127
+            width: 259
+            pos_hint: {'center_x': 0.2, 'center_y': 0.5}
+
+        MDTextFieldRound:
+            id: user
+            hint_text: "Email"
+            icon_right: "account"
+            size_hint_x: None
+            size_hint_y: None
+            width: 200
+            font_size: 18
+            pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+
+        MDTextFieldRound:
+            id: password
+            hint_text: "Password"
+            icon_right: "eye-off"
+            size_hint_x: None
+            size_hint_y: None
+            width: 200
+            font_size: 18
+            pos_hint: {'center_x': 0.5, 'center_y': 0.3}
+            password: True
+
+        MDGridLayout:
+            cols: 2
+            rows: 1
+            spacing: 10
+            size_hint_x: None 
+            size_hint_y: None            
+            height: self.minimum_height
+            pos_hint: {"center_x": 0.5, "center_y": 0.2}
+            
+            MDCheckbox:
+                id: keep_me_logged_in_checkbox
+                active: root.keep_me_logged_in
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                size_hint: None, None
+                size: dp(48), dp(48)
+                
+            MDLabel:
+                text: 'Keep me logged in'
+                halign: 'center'
+                font_size: 16
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                size: dp(48), dp(358)
+
+        MDGridLayout:
+            cols: 3
+            rows: 1
+            spacing: 10
+            size_hint_x: None 
+            size_hint_y: None            
+            height: self.minimum_height
+            pos_hint: {"center_x": 0.5, "center_y": 0.1}
+
+            MDFillRoundFlatButton:
+                text: "Login"
+                font_size: 12
+                on_release: 
+                    root.manager.transition.direction = "left"
+                    root.validate_login_credentials()
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+            MDFillRoundFlatButton:
+                text: "Sign Up"
+                font_size: 12
+                on_release: 
+                    root.manager.transition.direction = "left"
+                    root.signUp()
+                pos_hint: {'center_x': 0.3, 'center_y': 0.5}
+                
+        MDFillRoundFlatButton:
+            text: "Forgot Password"
+            font_size: 12
+            on_release:
+                root.manager.transition.direction = "left"
+                root.forgotPassword()
+            
+<passwordRecovery>:
+    name: "forgotPasswordWindow"
+    
+    MDGridLayout:
+        cols: 1
+        spacing: 10
+        size_hint_x: None
+        size_hint_y: None        
+        halign: 'center'
+        height: self.minimum_height
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    
         
+        MDTextFieldRound:
+            id: email
+            hint_text: "Email"
+            icon_right: "account"
+            size_hint_x: None
+            size_hint_y: None
+            width: 200
+            font_size: 18
+            pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+
+        MDFillRoundFlatButton:
+            text: "Submit"
+            font_size: 12
+            on_release: 
+                root.manager.transition.direction = "left"
+                root.requestToken()
+            pos_hint: {'center_x': 0.3, 'center_y': 0.5}
+              
+        MDFillRoundFlatButton:
+            text: "Back"
+            font_size: 12
+            on_release: 
+                root.manager.transition.direction = "right"
+                root.backToLogin()
+            pos_hint: {'center_x': 0.3, 'center_y': 0.5}
+          
+<verifyToken>:
+    name: "verifyTokenWindow"
+    
+    MDGridLayout:
+        cols: 1
+        spacing: 10
+        size_hint_x: None
+        size_hint_y: None        
+        halign: 'center'
+        height: self.minimum_height
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    
+        
+        MDTextFieldRound:
+            id: token
+            hint_text: "Token"
+            icon_right: "account"
+            size_hint_x: None
+            size_hint_y: None
+            width: 200
+            font_size: 18
+            pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+
+        MDFillRoundFlatButton:
+            text: "Submit"
+            font_size: 12
+            on_release: 
+                root.manager.transition.direction = "left"
+                root.matchToken()
+            pos_hint: {'center_x': 0.3, 'center_y': 0.5}
+              
+        MDFillRoundFlatButton:
+            text: "Back"
+            font_size: 12
+            on_release: 
+                root.manager.transition.direction = "right"
+                root.backToLogin()
+            pos_hint: {'center_x': 0.3, 'center_y': 0.5}
+          
+<changePasswordScreen>:
+    name: "changePasswordWindow"
+    
+    MDGridLayout:
+        cols: 1
+        spacing: 10
+        size_hint_x: None
+        size_hint_y: None        
+        halign: 'center'
+        height: self.minimum_height
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    
+        
+        MDTextFieldRound:
+            id: password
+            hint_text: "Password"
+            icon_right: "account"
+            size_hint_x: None
+            size_hint_y: None
+            width: 200
+            font_size: 18
+            pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+
+        MDTextFieldRound:
+            id: confirmPassword
+            hint_text: "Confirm Password"
+            icon_right: "account"
+            size_hint_x: None
+            size_hint_y: None
+            width: 200
+            font_size: 18
+            pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+
+        MDFillRoundFlatButton:
+            text: "Submit"
+            font_size: 12
+            on_release: 
+                root.manager.transition.direction = "left"
+                root.submit()
+            pos_hint: {'center_x': 0.3, 'center_y': 0.5}
+              
+        MDFillRoundFlatButton:
+            text: "Back"
+            font_size: 12
+            on_release: 
+                root.manager.transition.direction = "right"
+                root.backToLogin()
+            pos_hint: {'center_x': 0.3, 'center_y': 0.5}
+          
+
 
 <ImageButton@ButtonBehavior+ButtonWidget>:        
 # this class is created on the fly, named ImageButton and subclasses ButtonBehavior and Image
@@ -142,8 +559,55 @@ WindowManager:
                 Rectangle:
                     size: self.size
                     pos: self.pos
-<LoggedInScreen>
-    name: "LoggedInWindow"
+<CustomOneLineAvatarListItem>
+    ImageLeftWidget:
+        source: root.source
+
+<SearchScreen>
+    name: "SearchWindow"
+
+    MDBoxLayout:
+        orientation: 'vertical'
+        height: self.minimum_height
+        spacing: dp(10)
+        padding: dp(20)
+
+        MDBoxLayout:
+            adaptive_height: True
+
+            MDIconButton:
+                icon: 'close'
+                on_release: root.goToLoggedInScreen()
+
+
+            MDTextField:
+                id: search_field
+                hint_text: 'Search user'
+                on_text: root.set_list_md_icons(self.text, True)
+            
+            MDDropDownItem:
+                id: drop_item
+                size_hint_x: None
+                text: 'Search By'
+                on_release: root.menu.open()
+
+
+        RecycleView:
+            id: rv
+            key_viewclass: 'viewclass'
+            key_size: 'height'
+
+            RecycleBoxLayout:
+                padding: dp(10)
+                default_size: None, dp(48)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+
+
+<ClientScreen>
+    name: "client_login"
     
     MDBottomNavigation:
 
@@ -153,10 +617,10 @@ WindowManager:
             icon: 'home'
             MDToolbar:
                 id: toolbar
-                title: "Home"
                 elevation: 10
                 pos_hint: {"top": 1}
-                right_action_items: [["bell", lambda x: root.goToNotifications(), "Notifications"]]
+                left_action_items: [["logout", lambda x: root.Logout(), "Logout"]]
+                right_action_items: [["bell", lambda x: root.goToNotifications(), "Notifications"],["magnify", lambda x: root.goToSearchApp(), "Search"]]
             
             ScrollView:
                 size_hint_y: None
@@ -294,156 +758,813 @@ WindowManager:
 
                 
         MDBottomNavigationItem:
+            id: profile_icon
             name: 'screen 5'
-            text: 'PROFILE'
-            icon: 'account'
+            text: 'Profile'
+            icon: 'account-circle'
+            ScrollView:
+                MDBoxLayout:
+                    orientation: 'vertical'
+
+                    MDBoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: '260dp'
+
+                        FitImage:
+                            id: cover_photo
+                            source: ''
+                            size_hint_y: None
+                            height: '180dp'
+
+                        MDBoxLayout:
+                            orientation: 'horizontal'
+                            padding: '16dp'
+                            spacing: '16dp'
+
+                            FitImage:
+                                id: profile_picture
+                                source: ''
+                                size_hint: None, None
+                                size: '100dp', '100dp'
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                spacing: '8dp'
+
+                                MDLabel:
+                                    id: nameLabel
+                                    text: 'Contractor Name'
+                                    font_style: 'H5'
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+
+                                MDLabel:
+                                    id: company_name
+                                    text: 'Company Working For'
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+
+                                StarRatings:
+                                    rating: root.rating
+                                    color: '#FFD700'
+
+                    MDTabs:                              
+                        Tab:
+                            title: 'Posts'
+
+                            MDGridLayout:
+                                id: post_grid
+                                cols: 1
+                                padding: '16dp'
+                                spacing: '8dp'
+
+
+                        Tab:
+                            text: 'Reviews'
+
+                            MDGridLayout:
+                                id: review_grid
+                                cols: 1
+                                padding: '16dp'
+                                spacing: '8dp'
+
+<CompanyScreen>
+    name: "company_login"
+    
+    MDBottomNavigation:
+
+        MDBottomNavigationItem:
+            name: 'screen 1'
+            text: 'Home'
+            icon: 'home'
             MDToolbar:
                 id: toolbar
-                title: "Profile"
                 elevation: 10
                 pos_hint: {"top": 1}
-                right_action_items: [["logout", lambda x: root.Logout(), "Logout"]]
-                
+                left_action_items: [["logout", lambda x: root.Logout(), "Logout"]]
+                right_action_items: [["bell", lambda x: root.goToNotifications(), "Notifications"],["magnify", lambda x: root.goToSearchApp(), "Search"]]
+            
             ScrollView:
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)
                 canvas.before:
                     Color:
-                        rgba: 1, 1, 1, 1
+                        rgba: 0.149, 0.239, 0.36, 1
                     Rectangle:
                         size: self.size
                         pos: self.pos
-                size_hint_y: None
-                height: root.height - toolbar.height - dp(55)
                 
                 MDCard:
-                    id: profileCard
                     size: root.width, root.height
                     elevation: 10
                     size_hint: None, None
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                     orientation: 'vertical'
-                    #spacing: 25
-                    MDGridLayout:
-                        md_bg_color: 0.149, 0.239, 0.36, 1
-                        rows: 4
-                        CoverBoxLayout:
-                            md_bg_color: 0,0,0,1
-                            size_hint_y: None
-                            width: self.parent.width
-                            height: "200dp"
-                            orientation: 'vertical'
-                            ImageButton:
-                                id: coverImage
-                                allow_stretch: True
-                                keep_ratio: False
-                                size_hint_y: None
-                                height: "200dp"
-                                width: self.parent.width
-                                canvas.after:
-                                    Color:
-                                        rgba: 1, 1, 1, 1
-                                            
-                                    Rectangle:
-                                        size: self.size
-                                        pos: self.pos
-                                        source: 'imageicon.png'
-                                on_press: self.parent.callback()
-                        
-                        MDGridLayout:
-                            md_bg_color: 1, 0.239, 1, 1
-                            cols: 3
-                            size_hint: None, None
-                            width: self.parent.width
-                            MDRectangleFlatButton:
-                                text: "New Post"
-                                theme_text_color: "Custom"
-                                text_color: 1, 0, 0, 1
-                                line_color: 0, 0, 1, 1
-                                font_size: 12
-                                
-                            MDGridLayout:
-                                size_hint: 0.5, None
-                                rows: 2
-                                ImageButton:                             
-                                    canvas.after:
-                                        Color:
-                                            rgba: 1, 1, 1, 1
-                                                
-                                        RoundedRectangle:
-                                            size: 100, 100
-                                            pos: self.parent.x * 2, self.y
-                                            radius: [60,]
-                                            source: '1.jpg'
+                    spacing: 25
+                    canvas:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
 
-                                    on_press: self.profilePhotocallback()
-                                    id: profileImage
+
+                    MDLabel:
+                        id: welcomeLabel
+                        text: " "
+                        size_hint_y: None
+                        halign: 'center'
+                        font_size: 40
+
+                    Widget:
+                        size_hint_y: None
+                        height: 280
+
+        MDBottomNavigationItem:
+            name: 'screen 2'
+            text: 'Jobs'
+            icon: 'format-list-bulleted'
+            MDToolbar:
+                id: toolbar
+                title: "Jobs"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["magnify", lambda x: grid.set_button_text(), "Search"]]
+
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)    
+                JobsList:
+                    canvas.before:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+        MDBottomNavigationItem:
+            name: 'screen 3'
+            text: 'Messages'
+            icon: 'message-text'
+            MDToolbar:
+                id: toolbar
+                title: "Messages"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["magnify", lambda x: grid.set_button_text(), "Search"]]
+
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)    
+                Messages:
+                    canvas.before:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+        MDBottomNavigationItem:
+            name: 'screen 4'
+            text: 'Calendar'
+            icon: 'calendar-month'
+            canvas.before:
+                Color:
+                    rgba: .5,.6,.7,1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            orientation:'vertical'
+            BoxLayout:
+                size_hint:1,.1
+                
+            BoxLayout:
+                BoxLayout:
+                    orientation: 'vertical'
+                    Days:
+                    Dates:
+                        id: grid
+
+            MDToolbar:
+                id: toolbarCalendar
+                title: ""
+                anchor_title: "center"
+                elevation: 10
+                pos_hint: {"top": 1}
+
+                MDFloatingActionButton:
+                    icon: "arrow-left"
+                    elevation: 0
+                    on_release:
+                        grid.previousMonth()
+                        root.updateCalendar()
+
+                MDFloatingActionButton:
+                    icon: "arrow-right"
+                    elevation: 0
+                    on_release:
+                        grid.nextMonth()
+                        root.updateCalendar()
+
+                
+        MDBottomNavigationItem:
+            id: profile_icon
+            name: 'screen 5'
+            text: 'Profile'
+            icon: 'account-circle'
+            ScrollView:
+                MDBoxLayout:
+                    orientation: 'vertical'
+
+                    MDBoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: '260dp'
+
+                        FitImage:
+                            id: cover_photo
+                            source: ''
+                            size_hint_y: None
+                            height: '180dp'
+
+                        MDBoxLayout:
+                            orientation: 'horizontal'
+                            padding: '16dp'
+                            spacing: '16dp'
+
+                            FitImage:
+                                id: profile_picture
+                                source: ''
+                                size_hint: None, None
+                                size: '100dp', '100dp'
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                spacing: '8dp'
+
                                 MDLabel:
                                     id: nameLabel
-                                    text: "Name"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 1}
-                                    halign: 'center'
-                                    font_size: 40
-                            
-                            BoxLayout:
-                                size_hint: None, None
-                                MDRectangleFlatButton:
-                                    text: "Edit profile"
-                                    theme_text_color: "Custom"
-                                    text_color: 1, 0, 0, 1
-                                    line_color: 0, 0, 1, 1
-                                    font_size: 12
-                        BoxLayout:
-                            size_hint: None, None
-                            width: self.parent.width
-
-                            MDLabel:
-                                id: lastlb
-                                text: "about"
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                halign: 'center'
-                                font_size: 40
-
-                        MDGridLayout:
-                            md_bg_color: 0.149, 0.239, 0.36, 1
-                            rows: 4
-                            size_hint: None, None
-                            width: self.parent.width
-                            BoxLayout:
-                                size_hint: None, None
-                                width: self.parent.width
+                                    text: 'Contractor Name'
+                                    font_style: 'H5'
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
 
                                 MDLabel:
-                                    id: lastlb
-                                    text: "Post 1"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                    halign: 'center'
-                                    font_size: 40
-                            BoxLayout:
+                                    id: company_name
+                                    text: 'Company Working For'
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+
+                                StarRatings:
+                                    rating: root.rating
+                                    color: '#FFD700'
+
+                    MDTabs:                              
+                        Tab:
+                            title: 'Posts'
+
+                            MDGridLayout:
+                                id: post_grid
+                                cols: 1
+                                padding: '16dp'
+                                spacing: '8dp'
+
+
+                        Tab:
+                            text: 'Reviews'
+
+                            MDGridLayout:
+                                id: review_grid
+                                cols: 1
+                                padding: '16dp'
+                                spacing: '8dp'
+
+<AdminScreen>
+    name: "admin_login"
+    
+    MDBottomNavigation:
+
+        MDBottomNavigationItem:
+            name: 'screen 1'
+            text: 'Home'
+            icon: 'home'
+            MDToolbar:
+                id: toolbar
+                elevation: 10
+                pos_hint: {"top": 1}
+                left_action_items: [["logout", lambda x: root.Logout(), "Logout"]]
+                right_action_items: [["bell", lambda x: root.goToNotifications(), "Notifications"],["magnify", lambda x: root.goToSearchApp(), "Search"]]
+            
+            ScrollView:
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                
+                MDCard:
+                    size: root.width, root.height
+                    elevation: 10
+                    size_hint: None, None
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    orientation: 'vertical'
+                    spacing: 25
+                    canvas:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+
+                    MDLabel:
+                        id: welcomeLabel
+                        text: " "
+                        size_hint_y: None
+                        halign: 'center'
+                        font_size: 40
+
+                    Widget:
+                        size_hint_y: None
+                        height: 280
+
+        MDBottomNavigationItem:
+            name: 'screen 2'
+            text: 'Jobs'
+            icon: 'format-list-bulleted'
+            MDToolbar:
+                id: toolbar
+                title: "Jobs"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["magnify", lambda x: grid.set_button_text(), "Search"]]
+
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)    
+                JobsList:
+                    canvas.before:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+        MDBottomNavigationItem:
+            name: 'screen 3'
+            text: 'Messages'
+            icon: 'message-text'
+            MDToolbar:
+                id: toolbar
+                title: "Messages"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["magnify", lambda x: grid.set_button_text(), "Search"]]
+
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)    
+                Messages:
+                    canvas.before:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+        MDBottomNavigationItem:
+            name: 'screen 4'
+            text: 'Calendar'
+            icon: 'calendar-month'
+            canvas.before:
+                Color:
+                    rgba: .5,.6,.7,1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            orientation:'vertical'
+            BoxLayout:
+                size_hint:1,.1
+                
+            BoxLayout:
+                BoxLayout:
+                    orientation: 'vertical'
+                    Days:
+                    Dates:
+                        id: grid
+
+            MDToolbar:
+                id: toolbarCalendar
+                title: ""
+                anchor_title: "center"
+                elevation: 10
+                pos_hint: {"top": 1}
+
+                MDFloatingActionButton:
+                    icon: "arrow-left"
+                    elevation: 0
+                    on_release:
+                        grid.previousMonth()
+                        root.updateCalendar()
+
+                MDFloatingActionButton:
+                    icon: "arrow-right"
+                    elevation: 0
+                    on_release:
+                        grid.nextMonth()
+                        root.updateCalendar()
+
+                
+        MDBottomNavigationItem:
+            id: profile_icon
+            name: 'screen 5'
+            text: 'Profile'
+            icon: 'account-circle'
+            ScrollView:
+                MDBoxLayout:
+                    orientation: 'vertical'
+
+                    MDBoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: '260dp'
+
+                        FitImage:
+                            id: cover_photo
+                            source: ''
+                            size_hint_y: None
+                            height: '180dp'
+
+                        MDBoxLayout:
+                            orientation: 'horizontal'
+                            padding: '16dp'
+                            spacing: '16dp'
+
+                            FitImage:
+                                id: profile_picture
+                                source: ''
                                 size_hint: None, None
-                                width: self.parent.width
+                                size: '100dp', '100dp'
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                spacing: '8dp'
 
                                 MDLabel:
-                                    id: lastlb
-                                    text: "Post 2"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                    halign: 'center'
-                                    font_size: 40
-                            BoxLayout:
-                                size_hint: None, None
-                                width: self.parent.width
+                                    id: nameLabel
+                                    text: 'Contractor Name'
+                                    font_style: 'H5'
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
 
                                 MDLabel:
-                                    id: lastlb
-                                    text: "Post 3"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                    halign: 'center'
-                                    font_size: 40
-                            BoxLayout:
+                                    id: company_name
+                                    text: 'Company Working For'
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+
+                                StarRatings:
+                                    rating: root.rating
+                                    color: '#FFD700'
+
+                    MDTabs:                              
+                        Tab:
+                            title: 'Posts'
+
+                            MDGridLayout:
+                                id: post_grid
+                                cols: 1
+                                padding: '16dp'
+                                spacing: '8dp'
+
+
+                        Tab:
+                            text: 'Reviews'
+
+                            MDGridLayout:
+                                id: review_grid
+                                cols: 1
+                                padding: '16dp'
+                                spacing: '8dp'
+                                
+
+<ContractorScreen>
+    name: "contractor_login"
+    
+    MDBottomNavigation:
+
+        MDBottomNavigationItem:
+            name: 'screen 1'
+            text: 'Home'
+            icon: 'home'
+            MDToolbar:
+                id: toolbar                
+                elevation: 10
+                pos_hint: {"top": 1}
+                left_action_items: [["logout", lambda x: root.Logout(), "Logout"]]
+                right_action_items: [["bell", lambda x: root.goToNotifications(), "Notifications"],["magnify", lambda x: root.goToSearchApp(), "Search"]]
+            
+            ScrollView:
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                
+                MDCard:
+                    size: root.width, root.height
+                    elevation: 10
+                    size_hint: None, None
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    orientation: 'vertical'
+                    spacing: 25
+                    canvas:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+
+                    MDLabel:
+                        id: welcomeLabel
+                        text: " "
+                        size_hint_y: None
+                        halign: 'center'
+                        font_size: 40
+
+                    Widget:
+                        size_hint_y: None
+                        height: 280
+
+        MDBottomNavigationItem:
+            name: 'screen 2'
+            text: 'Jobs'
+            icon: 'format-list-bulleted'
+            MDToolbar:
+                id: toolbar
+                title: "Jobs"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["magnify", lambda x: grid.set_button_text(), "Search"]]
+
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)    
+                JobsList:
+                    canvas.before:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+        MDBottomNavigationItem:
+            name: 'screen 3'
+            text: 'Messages'
+            icon: 'message-text'
+            MDToolbar:
+                id: toolbar
+                title: "Messages"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["magnify", lambda x: grid.set_button_text(), "Search"]]
+
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)    
+                Messages:
+                    canvas.before:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+        MDBottomNavigationItem:
+            name: 'screen 4'
+            text: 'Calendar'
+            icon: 'calendar-month'
+            canvas.before:
+                Color:
+                    rgba: .5,.6,.7,1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            orientation:'vertical'
+            BoxLayout:
+                size_hint:1,.1
+                
+            BoxLayout:
+                BoxLayout:
+                    orientation: 'vertical'
+                    Days:
+                    Dates:
+                        id: grid
+
+            MDToolbar:
+                id: toolbarCalendar
+                title: ""
+                anchor_title: "center"
+                elevation: 10
+                pos_hint: {"top": 1}
+
+                MDFloatingActionButton:
+                    icon: "arrow-left"
+                    elevation: 0
+                    on_release:
+                        grid.previousMonth()
+                        root.updateCalendar()
+
+                MDFloatingActionButton:
+                    icon: "arrow-right"
+                    elevation: 0
+                    on_release:
+                        grid.nextMonth()
+                        root.updateCalendar()
+
+                
+        MDBottomNavigationItem:
+            id: profile_icon
+            name: 'screen 5'
+            text: 'Profile'
+            icon: 'account-circle'
+            ScrollView:
+                MDBoxLayout:
+                    orientation: 'vertical'
+
+                    MDBoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: '260dp'
+
+                        FitImage:
+                            id: cover_photo
+                            source: ''
+                            size_hint_y: None
+                            height: '180dp'
+
+                        MDBoxLayout:
+                            orientation: 'horizontal'
+                            padding: '16dp'
+                            spacing: '16dp'
+
+                            FitImage:
+                                id: profile_picture
+                                source: ''
                                 size_hint: None, None
-                                width: self.parent.width
+                                size: '100dp', '100dp'
+
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                spacing: '8dp'
 
                                 MDLabel:
-                                    id: lastlb
-                                    text: "Post 4"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                    halign: 'center'
-                                    font_size: 40
+                                    id: nameLabel
+                                    text: 'Contractor Name'
+                                    font_style: 'H5'
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+
+                                MDLabel:
+                                    id: company_name
+                                    text: 'Company Working For'
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+
+                                StarRatings:
+                                    rating: root.rating
+                                    color: '#FFD700'
+
+                    MDTabs:                              
+                        Tab:
+                            title: 'Posts'
+
+                            MDGridLayout:
+                                id: post_grid
+                                cols: 1
+                                padding: '16dp'
+                                spacing: '8dp'
+
+
+                        Tab:
+                            text: 'Reviews'
+
+                            MDGridLayout:
+                                id: review_grid
+                                cols: 1
+                                padding: '16dp'
+                                spacing: '8dp'
+
+<SearchedUser>
+    name: searched_user
+
+    ScrollView:
+        MDBoxLayout:
+            orientation: 'vertical'
+
+            MDBoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: '260dp'
+
+                FitImage:
+                    id: cover_photo
+                    source: ''
+                    size_hint_y: None
+                    height: '180dp'
+
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    padding: '16dp'
+                    spacing: '16dp'
+
+                    FitImage:
+                        id: profile_picture
+                        source: ''
+                        size_hint: None, None
+                        size: '100dp', '100dp'
+
+                    MDBoxLayout:
+                        orientation: 'vertical'
+                        spacing: '8dp'
+
+                        MDLabel:
+                            id: nameLabel
+                            text: 'Contractor Name'
+                            font_style: 'H5'
+                            size_hint_y: None
+                            height: self.texture_size[1]
+
+                        MDLabel:
+                            id: company_name
+                            text: 'Company Working For'
+                            size_hint_y: None
+                            height: self.texture_size[1]
+
+                        StarRatings:
+                            rating: root.rating
+                            color: '#FFD700'
+
+            MDTabs:                              
+                Tab:
+                    title: 'Posts'
+
+                    MDGridLayout:
+                        id: post_grid
+                        cols: 1
+                        padding: '16dp'
+                        spacing: '8dp'
+
+
+                Tab:
+                    text: 'Reviews'
+
+                    MDGridLayout:
+                        id: review_grid
+                        cols: 1
+                        padding: '16dp'
+                        spacing: '8dp'

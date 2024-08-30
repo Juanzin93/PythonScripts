@@ -1,0 +1,452 @@
+#:import MDBoxLayout kivymd.uix.boxlayout.MDBoxLayout
+#:import MDBottomNavigationItem kivymd.uix.bottomnavigation.MDBottomNavigationItem
+#:import MDLabel kivymd.uix.label.MDLabel
+
+WindowManager:
+    canvas:
+        Color:
+            rgba: 0.149, 0.239, 0.36, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    Initialize: 
+    LoginScreen: 
+    LoggedInScreen:
+    NotificationScreen:
+<Initialize>:
+    name: "Initialize"
+    on_enter:
+        root.manager.current = "LoginWindow"
+        root.manager.transition.direction = "right"
+    canvas:
+        Color:
+            rgba: 0, 0, 255, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    FitImage:
+        id: CompLogo
+        source: "floringAmericaLogo2.png"
+        allow_stretch: True
+        keep_ratio: True
+        size_hint_y: None
+        size_hint_x: None
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+        height: 127
+        width: 259
+
+<LoginScreen>:
+    name: "LoginWindow"
+    
+    FitImage:
+        id: msLogo
+        source: "floringAmericaLogo2.png"
+        size_hint_y: .5
+        allow_stretch: True
+        keep_ratio: True
+        size_hint_y: None
+        size_hint_x: None
+        pos_hint: {"center_x": 0.5, "center_y": 0.65}
+        height: 127
+        width: 259
+
+    MDTextFieldRound:
+        id: user
+        hint_text: "Email"
+        icon_right: "account"
+        size_hint_x: None
+        width: 200
+        font_size: 18
+        pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+
+    MDTextFieldRound:
+        id: password
+        hint_text: "Password"
+        icon_right: "eye-off"
+        size_hint_x: None
+        width: 200
+        font_size: 18
+        pos_hint: {'center_x': 0.5, 'center_y': 0.3}
+        password: True
+
+    MDFillRoundFlatButton:
+        text: "Login"
+        font_size: 12
+        pos_hint: {'center_x': 0.5, 'center_y': 0.2}
+        on_release: 
+            root.manager.transition.direction = "left"
+            root.Login()
+            
+    MDFillRoundFlatButton:
+        text: "Forgot Password?"
+        font_size: 12
+        pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+        on_press: app.forgotPassword()
+                
+    MDLabel:
+        id: wrongPassword
+        text: " "
+        font_size: 20
+        pos_hint: {'center_x': 0.5, 'center_y': 0.02}
+        halign: 'center'
+        height: self.texture_size[1]
+        size_hint_y: None
+        
+
+<ImageButton@ButtonBehavior+ButtonWidget>:        
+# this class is created on the fly, named ImageButton and subclasses ButtonBehavior and Image
+# It's basically an Image that can act like a Button.
+
+<CustomWidget@Widget>:
+    background_color: 1, 1, 1, 1
+    radius: [10]
+    canvas.before:
+        Color:
+            rgba: root.background_color
+                
+        RoundedRectangle:
+            size: 100, 40
+            pos: self.pos
+            radius: root.radius
+    theme_text_color: "Custom"
+
+<CustomLabel@CustomWidget+Label>:
+    background_color: 0, 0, 0, 0
+    text: "Custom Label"
+
+<CustomButton@ButtonBehavior+CustomLabel>:
+    background_color: 1, 0, 0, 0
+    text: "Custom Button"
+
+<NotificationScreen>
+    name: "NotificationsWindow"
+
+    MDToolbar:
+        id: toolbar
+        title: "Notifications"
+        elevation: 10
+        pos_hint: {"top": 1}
+        right_action_items: [["magnify", lambda x: grid.set_button_text(), "Search"]]
+        left_action_items: [["close", lambda x: root.goToLoggedInScreen(), "Close"]]
+
+    ScrollView:
+        canvas.before:
+            Color:
+                rgba: 0.149, 0.239, 0.36, 1
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        size_hint_y: None
+        height: root.height - toolbar.height    
+        Notifications:
+            canvas.before:
+                Color:
+                    rgba: 0.149, 0.239, 0.36, 1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+<LoggedInScreen>
+    name: "LoggedInWindow"
+    
+    MDBottomNavigation:
+
+        MDBottomNavigationItem:
+            name: 'screen 1'
+            text: 'Home'
+            icon: 'home'
+            MDToolbar:
+                id: toolbar
+                title: "Home"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["bell", lambda x: root.goToNotifications(), "Notifications"]]
+            
+            ScrollView:
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                
+                MDCard:
+                    size: root.width, root.height
+                    elevation: 10
+                    size_hint: None, None
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    orientation: 'vertical'
+                    spacing: 25
+                    canvas:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+
+                    MDLabel:
+                        id: welcomeLabel
+                        text: " "
+                        size_hint_y: None
+                        halign: 'center'
+                        font_size: 40
+
+                    Widget:
+                        size_hint_y: None
+                        height: 280
+
+        MDBottomNavigationItem:
+            name: 'screen 2'
+            text: 'Jobs'
+            icon: 'format-list-bulleted'
+            MDToolbar:
+                id: toolbar
+                title: "Jobs"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["magnify", lambda x: grid.set_button_text(), "Search"]]
+
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)    
+                JobsList:
+                    canvas.before:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+        MDBottomNavigationItem:
+            name: 'screen 3'
+            text: 'Messages'
+            icon: 'message-text'
+            MDToolbar:
+                id: toolbar
+                title: "Messages"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["magnify", lambda x: grid.set_button_text(), "Search"]]
+
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 0.149, 0.239, 0.36, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)    
+                Messages:
+                    canvas.before:
+                        Color:
+                            rgba: 0.149, 0.239, 0.36, 1
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+        MDBottomNavigationItem:
+            name: 'screen 4'
+            text: 'Calendar'
+            icon: 'calendar-month'
+            canvas.before:
+                Color:
+                    rgba: .5,.6,.7,1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            orientation:'vertical'
+            BoxLayout:
+                size_hint:1,.1
+                
+            BoxLayout:
+                BoxLayout:
+                    orientation: 'vertical'
+                    Days:
+                    Dates:
+                        id: grid
+
+            MDToolbar:
+                id: toolbarCalendar
+                title: ""
+                anchor_title: "center"
+                elevation: 10
+                pos_hint: {"top": 1}
+
+                MDFloatingActionButton:
+                    icon: "arrow-left"
+                    elevation: 0
+                    on_release:
+                        grid.previousMonth()
+                        root.updateCalendar()
+
+                MDFloatingActionButton:
+                    icon: "arrow-right"
+                    elevation: 0
+                    on_release:
+                        grid.nextMonth()
+                        root.updateCalendar()
+
+                
+        MDBottomNavigationItem:
+            name: 'screen 5'
+            text: 'PROFILE'
+            icon: 'account'
+            MDToolbar:
+                id: toolbar
+                title: "Profile"
+                elevation: 10
+                pos_hint: {"top": 1}
+                right_action_items: [["logout", lambda x: root.Logout(), "Logout"]]
+                
+            ScrollView:
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                size_hint_y: None
+                height: root.height - toolbar.height - dp(55)
+                
+                MDCard:
+                    id: profileCard
+                    size: root.width, root.height
+                    elevation: 10
+                    size_hint: None, None
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    orientation: 'vertical'
+                    #spacing: 25
+                    MDGridLayout:
+                        md_bg_color: 0.149, 0.239, 0.36, 1
+                        rows: 4
+                        CoverBoxLayout:
+                            md_bg_color: 0,0,0,1
+                            size_hint_y: None
+                            width: self.parent.width
+                            height: "200dp"
+                            orientation: 'vertical'
+                            ImageButton:
+                                id: coverImage
+                                allow_stretch: True
+                                keep_ratio: False
+                                size_hint_y: None
+                                height: "200dp"
+                                width: self.parent.width
+                                canvas.after:
+                                    Color:
+                                        rgba: 1, 1, 1, 1
+                                            
+                                    Rectangle:
+                                        size: self.size
+                                        pos: self.pos
+                                        source: 'imageicon.png'
+                                on_press: self.parent.callback()
+                        
+                        MDGridLayout:
+                            md_bg_color: 1, 0.239, 1, 1
+                            cols: 3
+                            size_hint: None, None
+                            width: self.parent.width
+                            MDRectangleFlatButton:
+                                text: "New Post"
+                                theme_text_color: "Custom"
+                                text_color: 1, 0, 0, 1
+                                line_color: 0, 0, 1, 1
+                                font_size: 12
+                                
+                            MDGridLayout:
+                                size_hint: 0.5, None
+                                rows: 2
+                                ImageButton:     
+                                    id: profileImage                        
+                                    on_press: self.profilePhotocallback()
+                                    canvas.after:
+                                        Color:
+                                            rgba: 1, 1, 1, 1
+                                                
+                                        RoundedRectangle:
+                                            size: 100, 100
+                                            pos: self.parent.x * 2, self.y
+                                            radius: [60,]
+                                            source: '1.jpg'
+                                MDLabel:
+                                    id: nameLabel
+                                    text: "Name"
+                                    pos_hint: {'center_x': 0.5, 'center_y': 1}
+                                    halign: 'center'
+                                    font_size: 40
+                            
+                            BoxLayout:
+                                size_hint: None, None
+                                MDRectangleFlatButton:
+                                    text: "Edit profile"
+                                    theme_text_color: "Custom"
+                                    text_color: 1, 0, 0, 1
+                                    line_color: 0, 0, 1, 1
+                                    font_size: 12
+                        BoxLayout:
+                            size_hint: None, None
+                            width: self.parent.width
+
+                            MDLabel:
+                                id: lastlb
+                                text: "about"
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                halign: 'center'
+                                font_size: 40
+
+                        MDGridLayout:
+                            md_bg_color: 0.149, 0.239, 0.36, 1
+                            rows: 4
+                            size_hint: None, None
+                            width: self.parent.width
+                            BoxLayout:
+                                size_hint: None, None
+                                width: self.parent.width
+
+                                MDLabel:
+                                    id: lastlb
+                                    text: "Post 1"
+                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                    halign: 'center'
+                                    font_size: 40
+                            BoxLayout:
+                                size_hint: None, None
+                                width: self.parent.width
+
+                                MDLabel:
+                                    id: lastlb
+                                    text: "Post 2"
+                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                    halign: 'center'
+                                    font_size: 40
+                            BoxLayout:
+                                size_hint: None, None
+                                width: self.parent.width
+
+                                MDLabel:
+                                    id: lastlb
+                                    text: "Post 3"
+                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                    halign: 'center'
+                                    font_size: 40
+                            BoxLayout:
+                                size_hint: None, None
+                                width: self.parent.width
+
+                                MDLabel:
+                                    id: lastlb
+                                    text: "Post 4"
+                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                    halign: 'center'
+                                    font_size: 40

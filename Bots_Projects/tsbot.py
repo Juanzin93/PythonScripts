@@ -601,5 +601,5 @@ if __name__ == "__main__":
     Bot.__init__()   
     #threading.Thread(target=Bot.comandos).start()
     while True: 
-        Bot.updateGuildMembersInDatabase()
-        Bot.updatePlayersOnline()
+        #Bot.updateGuildMembersInDatabase()
+        #Bot.updatePlayersOnline()
